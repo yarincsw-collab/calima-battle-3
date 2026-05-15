@@ -35,7 +35,7 @@ export default function LandingPage() {
       <EventStrip />
       <DisciplinesSection />
       <ActionShot
-        src="/gallery/front-lever.jpg"
+        src="/gallery/front-lever-cut.png"
         alt="פריסטייל על המתח"
         from="right"
         caption="פריסטייל ברמה הגבוהה ביותר"
@@ -44,7 +44,7 @@ export default function LandingPage() {
       <JudgingSection />
       <LevelsSection />
       <ActionShot
-        src="/gallery/podium-1.jpg"
+        src="/gallery/podium-1-cut.png"
         alt="פודיום זוכים מתחרות קלימה Battles"
         from="left"
         caption="3 הזוכים — Calima Battles 2"
@@ -381,16 +381,16 @@ function PricingSection() {
 function RegisterCTA() {
   return (
     <section className="relative py-24 px-5 overflow-hidden">
-      {/* Atmospheric background photo */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+      {/* Cyan glow + cut-out winners as atmospheric backdrop */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center" aria-hidden>
+        <div className="absolute w-[80%] sm:w-[60%] aspect-square rounded-full bg-electric-500/20 blur-3xl" />
         <Image
-          src="/gallery/podium-2.jpg"
+          src="/gallery/podium-2-cut.png"
           alt=""
-          fill
-          className="object-cover opacity-25"
-          sizes="100vw"
+          width={1200}
+          height={1800}
+          className="relative max-h-[90%] w-auto object-contain opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink-950 via-ink-950/85 to-ink-950" />
       </div>
 
       <Reveal>
@@ -470,25 +470,26 @@ function ActionShot({
   const isRight = from === "right";
   return (
     <section className="relative py-12 sm:py-20 px-4 sm:px-5 overflow-hidden">
-      <div className="mx-auto max-w-6xl grid sm:grid-cols-12 gap-6 items-center">
-        {/* Image */}
+      {/* Soft cyan glow behind the cut-out figure */}
+      <div
+        className={`absolute top-1/2 -translate-y-1/2 w-[55%] sm:w-[35%] aspect-square rounded-full bg-electric-500/15 blur-3xl pointer-events-none ${
+          isRight ? "end-[-10%]" : "start-[-10%]"
+        }`}
+        aria-hidden
+      />
+
+      <div className="relative mx-auto max-w-6xl grid sm:grid-cols-12 gap-6 items-center">
+        {/* Cut-out image — floating, no frame */}
         <div className={`sm:col-span-7 ${isRight ? "sm:order-last" : ""}`}>
           <SlideIn from={from} distance={120}>
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-glow group">
+            <div className="relative group">
               <Image
                 src={src}
                 alt={alt}
                 width={1200}
                 height={1600}
-                sizes="(max-width: 640px) 100vw, 60vw"
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-auto object-contain transition-transform duration-700 group-hover:scale-105 drop-shadow-[0_25px_45px_rgba(27,164,224,0.35)]"
               />
-              {/* Dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-transparent to-transparent pointer-events-none" />
-              {/* Corner badge */}
-              <div className="absolute top-3 start-3 px-2.5 py-1 rounded-md bg-electric-500/90 text-ink-950 text-xs font-bold not-italic uppercase tracking-wider">
-                {kicker}
-              </div>
             </div>
           </SlideIn>
         </div>
