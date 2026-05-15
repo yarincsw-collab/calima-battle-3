@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans:wght@300;400;500;600;700;800&family=Open+Sans+Hebrew:wght@300;400;500;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700;1,800&family=Open+Sans+Hebrew:ital,wght@0,400;0,700;1,400;1,700;1,800&display=swap");
 
 :root {
   color-scheme: dark;
@@ -12,7 +12,10 @@ html,
 body {
   background: #05070a;
   color: #f5f7fa;
+  /* Open Sans Bold Italic across the entire site */
   font-family: "Open Sans", "Open Sans Hebrew", "Segoe UI", system-ui, sans-serif;
+  font-weight: 700;
+  font-style: italic;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -20,9 +23,11 @@ html[dir="rtl"] body {
   letter-spacing: 0;
 }
 
-/* Brush stroke / grunge text helpers */
+/* Brush stroke / grunge text helpers — keep upright, not italic */
 .grunge-text {
   font-family: "Bebas Neue", Impact, sans-serif;
+  font-style: normal;
+  font-weight: 900;
   letter-spacing: 0.02em;
   text-shadow:
     0 0 1px rgba(255, 255, 255, 0.15),
@@ -69,17 +74,22 @@ html[dir="rtl"] body {
   );
 }
 
-/* Form input baseline */
+/* Form fields stay upright for readability */
 .input-field {
-  @apply w-full rounded-lg bg-ink-800 border border-ink-600/80 px-4 py-3 text-base text-white placeholder:text-white/40 focus:outline-none focus:border-electric-500 focus:ring-2 focus:ring-electric-500/30 transition;
+  @apply w-full rounded-lg bg-ink-800 border border-ink-600/80 px-4 py-3 text-base text-white placeholder:text-white/40 focus:outline-none focus:border-electric-500 focus:ring-2 focus:ring-electric-500/30 transition not-italic;
+  font-style: normal;
+}
+input, textarea, select, button {
+  font-style: normal;
+  font-weight: 700;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-md font-bold text-base uppercase tracking-wider bg-electric-500 text-ink-950 hover:bg-electric-400 transition shadow-glow active:scale-[0.98];
+  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-md font-bold text-base uppercase tracking-wider bg-electric-500 text-ink-950 hover:bg-electric-400 transition shadow-glow active:scale-[0.98] not-italic;
 }
 
 .btn-ghost {
-  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-md font-semibold text-base uppercase tracking-wider bg-transparent border border-white/20 text-white hover:bg-white/5 transition;
+  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-md font-semibold text-base uppercase tracking-wider bg-transparent border border-white/20 text-white hover:bg-white/5 transition not-italic;
 }
 
 .card {

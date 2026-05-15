@@ -1,5 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { BattlesLogo } from "@/components/Logo";
+import { Reveal } from "@/components/Reveal";
 import {
   CalendarIcon,
   MapPinIcon,
@@ -63,36 +65,63 @@ function Hero() {
       />
 
       <div className="relative mx-auto max-w-5xl text-center">
-        <div className="mb-6">
-          <span className="text-electric-400 font-bold uppercase tracking-[0.4em] text-xs sm:text-sm animate-pulseGlow inline-block px-3 py-1 rounded-full border border-electric-500/40 backdrop-blur-sm">
-            Save the date · 30-31.7
-          </span>
-        </div>
+        {/* Calima brand mark floating above the wordmark */}
+        <Reveal delay={0} y={10}>
+          <div className="flex justify-center mb-6 animate-floatY">
+            <Image
+              src="/calima-logo.png"
+              alt="Calima"
+              width={120}
+              height={140}
+              priority
+              className="h-16 sm:h-20 w-auto drop-shadow-[0_0_18px_rgba(63,201,255,0.45)]"
+            />
+          </div>
+        </Reveal>
 
-        <BattlesLogo className="mx-auto" />
+        <Reveal delay={120} y={10}>
+          <div className="mb-6">
+            <span className="text-electric-400 font-bold not-italic uppercase tracking-[0.4em] text-xs sm:text-sm animate-pulseGlow inline-block px-3 py-1 rounded-full border border-electric-500/40 backdrop-blur-sm">
+              Save the date · 30-31.7
+            </span>
+          </div>
+        </Reveal>
 
-        <p className="mt-6 text-xl sm:text-2xl font-semibold text-white/90">
-          {COMPETITION.tagline}<span className="text-electric-400">!</span>
-        </p>
-        <p className="mt-3 text-white/60 max-w-2xl mx-auto text-base sm:text-lg">
-          יומיים של תחרות. מקצי פריסטייל, סיבולת, פרו ארצי, ארצי, מתאמני קלימה ובנות.
-          הבמה הכי גדולה לקליסטניקס בישראל.
-        </p>
+        <Reveal delay={200} y={24}>
+          <BattlesLogo className="mx-auto" />
+        </Reveal>
 
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <Link href="/register" className="btn-primary">
-            הרשמה לתחרות
-            <ArrowLeftIcon className="w-5 h-5" />
-          </Link>
-          <a href="#disciplines" className="btn-ghost">
-            פרטים נוספים
-          </a>
-        </div>
+        <Reveal delay={360}>
+          <p className="mt-6 text-xl sm:text-2xl font-bold italic text-white/90">
+            {COMPETITION.tagline}<span className="text-electric-400">!</span>
+          </p>
+          <p className="mt-3 text-white/60 max-w-2xl mx-auto text-base sm:text-lg">
+            יומיים של תחרות. מקצי פריסטייל, סיבולת, פרו ארצי, ארצי, מתאמני קלימה ובנות.
+            הבמה הכי גדולה לקליסטניקס בישראל.
+          </p>
+        </Reveal>
 
-        <div className="mt-12 flex flex-wrap justify-center gap-x-10 gap-y-4 text-white/85">
-          <InfoBadge icon={CalendarIcon} label={`${COMPETITION.displayDates} • חמישי-שישי`} />
-          <InfoBadge icon={MapPinIcon} label={COMPETITION.venue.address} href={COMPETITION.venue.mapsUrl} />
-        </div>
+        <Reveal delay={480}>
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/register"
+              className="btn-primary group hover:-translate-y-0.5 hover:shadow-glow-strong transition-all"
+            >
+              הרשמה לתחרות
+              <ArrowLeftIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+            </Link>
+            <a href="#disciplines" className="btn-ghost hover:-translate-y-0.5 transition-all">
+              פרטים נוספים
+            </a>
+          </div>
+        </Reveal>
+
+        <Reveal delay={600}>
+          <div className="mt-12 flex flex-wrap justify-center gap-x-10 gap-y-4 text-white/85">
+            <InfoBadge icon={CalendarIcon} label={`${COMPETITION.displayDates} • חמישי-שישי`} />
+            <InfoBadge icon={MapPinIcon} label={COMPETITION.venue.address} href={COMPETITION.venue.mapsUrl} />
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -124,13 +153,20 @@ function InfoBadge({
 
 /* ──────────────────────────────────────────────────────── EVENT STRIP */
 function EventStrip() {
+  const stats = [
+    { number: "2", label: "ימי תחרות" },
+    { number: "7", label: "מקצים" },
+    { number: "66+", label: "מתחרים" },
+    { number: "1", label: "זוכה לכל מקצה" },
+  ];
   return (
     <section className="relative py-10 px-5 border-y border-white/5 bg-ink-900/60">
       <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-        <Stat number="2" label="ימי תחרות" />
-        <Stat number="7" label="מקצים" />
-        <Stat number="66+" label="מתחרים" />
-        <Stat number="1" label="זוכה לכל מקצה" />
+        {stats.map((s, i) => (
+          <Reveal key={s.label} delay={i * 100}>
+            <Stat number={s.number} label={s.label} />
+          </Reveal>
+        ))}
       </div>
     </section>
   );
@@ -138,11 +174,11 @@ function EventStrip() {
 
 function Stat({ number, label }: { number: string; label: string }) {
   return (
-    <div>
-      <div className="grunge-text text-electric-400 text-5xl sm:text-6xl drop-shadow-[0_0_15px_rgba(63,201,255,0.4)]">
+    <div className="group">
+      <div className="grunge-text text-electric-400 text-5xl sm:text-6xl drop-shadow-[0_0_15px_rgba(63,201,255,0.4)] transition-transform group-hover:scale-110">
         {number}
       </div>
-      <div className="mt-1 text-sm sm:text-base text-white/70">{label}</div>
+      <div className="mt-1 text-sm sm:text-base text-white/70 italic">{label}</div>
     </div>
   );
 }
@@ -172,10 +208,11 @@ function DisciplinesSection() {
         <SectionHeading kicker="התחרויות" title="פריסטייל וסיבולת" />
 
         <div className="mt-12 grid md:grid-cols-2 gap-6">
-          {disciplines.map((d) => (
-            <article key={d.title} className="card p-6 sm:p-8 hover:border-electric-500/40 transition group">
+          {disciplines.map((d, i) => (
+            <Reveal key={d.title} delay={i * 150}>
+              <article className="card p-6 sm:p-8 hover:border-electric-500/40 hover:-translate-y-1 hover:shadow-glow transition-all duration-500 group h-full">
               <div className="flex items-center gap-3 text-electric-400">
-                <d.icon className="w-8 h-8" />
+                <d.icon className="w-8 h-8 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
                 <span className="text-sm font-bold uppercase tracking-widest text-white/60">{d.day}</span>
               </div>
               <h3 className="mt-4 grunge-text text-5xl sm:text-6xl text-white brush-underline inline-block">
@@ -191,7 +228,8 @@ function DisciplinesSection() {
                   </li>
                 ))}
               </ul>
-            </article>
+              </article>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -208,7 +246,8 @@ function JudgingSection() {
 
         <div className="mt-12 grid md:grid-cols-2 gap-6">
           {/* Freestyle — link to PDF */}
-          <article className="card p-6 sm:p-8 hover:border-electric-500/40 transition">
+          <Reveal>
+            <article className="card p-6 sm:p-8 hover:border-electric-500/40 hover:-translate-y-1 hover:shadow-glow transition-all duration-500 h-full">
             <h3 className="grunge-text text-4xl text-electric-400">פריסטייל</h3>
             <p className="mt-4 text-white/70 text-sm sm:text-base leading-7">
               השפיטה בפריסטייל מתבססת על שילוב של יצירתיות, רמת קושי, ביצוע נקי ושליטה.
@@ -220,17 +259,19 @@ function JudgingSection() {
               href="/judging-freestyle.pdf"
               target="_blank"
               rel="noreferrer"
-              className="btn-primary mt-6 inline-flex"
+              className="btn-primary mt-6 inline-flex group hover:-translate-y-0.5"
             >
               חוקי השפיטה (PDF)
-              <ArrowLeftIcon className="w-5 h-5" />
+              <ArrowLeftIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
             </a>
 
             <p className="mt-3 text-xs text-white/45">5 עמודים · ~1MB</p>
-          </article>
+            </article>
+          </Reveal>
 
           {/* Endurance — points table inline */}
-          <article className="card p-6 sm:p-8 hover:border-electric-500/40 transition">
+          <Reveal delay={150}>
+            <article className="card p-6 sm:p-8 hover:border-electric-500/40 hover:-translate-y-1 hover:shadow-glow transition-all duration-500 h-full">
             <h3 className="grunge-text text-4xl text-electric-400">סיבולת</h3>
             <p className="mt-4 text-white/70 text-sm sm:text-base leading-7">
               פורמט צבירת נקודות — דקה אחת לצבור כמה שיותר. שילוב חופשי של תרגילים.
@@ -257,7 +298,8 @@ function JudgingSection() {
                 </tbody>
               </table>
             </div>
-          </article>
+            </article>
+          </Reveal>
         </div>
       </div>
     </section>
@@ -272,14 +314,13 @@ function LevelsSection() {
         <SectionHeading kicker="רמות" title="ארבע רמות. מקצה לכל אחד." />
 
         <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-5">
-          {LEVELS.map((l) => (
-            <div
-              key={l.label}
-              className="card p-6 text-center flex flex-col items-center gap-3 hover:border-electric-500/40 transition"
-            >
-              <l.icon className="w-12 h-12 text-electric-400" />
-              <div className="text-white font-bold">{l.label}</div>
-            </div>
+          {LEVELS.map((l, i) => (
+            <Reveal key={l.label} delay={i * 100}>
+              <div className="card p-6 text-center flex flex-col items-center gap-3 hover:border-electric-500/40 hover:-translate-y-1 hover:shadow-glow transition-all duration-500 group h-full">
+                <l.icon className="w-12 h-12 text-electric-400 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3" />
+                <div className="text-white font-bold italic">{l.label}</div>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -302,11 +343,13 @@ function PricingSection() {
         <SectionHeading kicker="עלויות הרשמה" title="מחירים פשוטים. שקופים." />
 
         <div className="mt-10 card divide-y divide-white/5">
-          {rows.map((r) => (
-            <div key={r.label} className="flex items-center justify-between gap-4 p-5 sm:p-6">
-              <span className="text-white/90 text-sm sm:text-base">{r.label}</span>
-              <span className="grunge-text text-electric-400 text-3xl sm:text-4xl">{r.price}</span>
-            </div>
+          {rows.map((r, i) => (
+            <Reveal key={r.label} delay={i * 80}>
+              <div className="flex items-center justify-between gap-4 p-5 sm:p-6 hover:bg-electric-500/[0.04] transition-colors">
+                <span className="text-white/90 text-sm sm:text-base">{r.label}</span>
+                <span className="grunge-text text-electric-400 text-3xl sm:text-4xl">{r.price}</span>
+              </div>
+            </Reveal>
           ))}
         </div>
 
@@ -323,11 +366,12 @@ function PricingSection() {
 function RegisterCTA() {
   return (
     <section className="relative py-24 px-5">
-      <div className="mx-auto max-w-4xl text-center card p-10 sm:p-14 border-electric-500/30 shadow-glow">
+      <Reveal>
+        <div className="mx-auto max-w-4xl text-center card p-10 sm:p-14 border-electric-500/30 shadow-glow hover:shadow-glow-strong transition-shadow duration-700">
         <h2 className="grunge-text text-5xl sm:text-7xl text-white">
-          מוכן <span className="text-electric-400">להילחם?</span>
+          מוכן <span className="text-electric-400 inline-block hover:scale-110 transition-transform">להילחם?</span>
         </h2>
-        <p className="mt-5 text-white/70 max-w-xl mx-auto">
+        <p className="mt-5 text-white/70 max-w-xl mx-auto italic">
           ההרשמה פתוחה — מספר המקומות מוגבל. השלם את הטופס תוך 5 דקות, ונחזור אליך עם אישור.
         </p>
 
@@ -338,21 +382,27 @@ function RegisterCTA() {
             "הצהרת בריאות מרופא (קובץ)",
             "חתימה דיגיטלית על קבלת אחריות",
             "טוקן אשראי לחיוב עתידי בלבד (לא מאוחסן אצלנו)",
-          ].map((t) => (
-            <li key={t} className="flex items-start gap-2">
-              <CheckIcon className="w-4 h-4 mt-1 text-electric-400 shrink-0" />
-              <span>{t}</span>
-            </li>
+          ].map((t, i) => (
+            <Reveal key={t} delay={i * 80} y={10}>
+              <li className="flex items-start gap-2">
+                <CheckIcon className="w-4 h-4 mt-1 text-electric-400 shrink-0" />
+                <span>{t}</span>
+              </li>
+            </Reveal>
           ))}
         </ul>
 
         <div className="mt-10">
-          <Link href="/register" className="btn-primary text-lg">
+          <Link
+            href="/register"
+            className="btn-primary text-lg group hover:-translate-y-0.5 hover:shadow-glow-strong transition-all"
+          >
             התחל הרשמה
-            <ArrowLeftIcon className="w-5 h-5" />
+            <ArrowLeftIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
           </Link>
         </div>
-      </div>
+        </div>
+      </Reveal>
     </section>
   );
 }
@@ -360,7 +410,14 @@ function RegisterCTA() {
 /* ──────────────────────────────────────────────────────── FOOTER */
 function Footer() {
   return (
-    <footer className="border-t border-white/5 py-10 px-5 text-center text-white/40 text-sm">
+    <footer className="border-t border-white/5 py-12 px-5 text-center text-white/40 text-sm">
+      <Image
+        src="/calima-logo.png"
+        alt="Calima"
+        width={80}
+        height={92}
+        className="h-12 w-auto mx-auto mb-4 opacity-60 hover:opacity-100 transition-opacity"
+      />
       <div className="grunge-text text-white text-2xl">CALIMA <span className="text-electric-400">BATTLES 3</span></div>
       <div className="mt-2">{COMPETITION.venue.address}</div>
       <div className="mt-1">© {new Date().getFullYear()} Calima — All rights reserved</div>
@@ -371,9 +428,11 @@ function Footer() {
 /* ──────────────────────────────────────────────────────── shared */
 function SectionHeading({ kicker, title }: { kicker: string; title: string }) {
   return (
-    <div className="text-center">
-      <div className="text-electric-400 text-xs sm:text-sm uppercase tracking-[0.5em] mb-3">{kicker}</div>
-      <h2 className="grunge-text text-4xl sm:text-5xl text-white">{title}</h2>
-    </div>
+    <Reveal>
+      <div className="text-center">
+        <div className="text-electric-400 text-xs sm:text-sm uppercase tracking-[0.5em] mb-3 not-italic">{kicker}</div>
+        <h2 className="grunge-text text-4xl sm:text-5xl text-white">{title}</h2>
+      </div>
+    </Reveal>
   );
 }
