@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BattlesLogo } from "@/components/Logo";
 import { Reveal } from "@/components/Reveal";
+import { SlideIn } from "@/components/SlideIn";
 import {
   CalendarIcon,
   MapPinIcon,
@@ -33,8 +34,22 @@ export default function LandingPage() {
       <Hero />
       <EventStrip />
       <DisciplinesSection />
+      <ActionShot
+        src="/gallery/front-lever.jpg"
+        alt="פריסטייל על המתח"
+        from="right"
+        caption="פריסטייל ברמה הגבוהה ביותר"
+        kicker="על המתח"
+      />
       <JudgingSection />
       <LevelsSection />
+      <ActionShot
+        src="/gallery/podium-1.jpg"
+        alt="פודיום זוכים מתחרות קלימה Battles"
+        from="left"
+        caption="3 הזוכים — Calima Battles 2"
+        kicker="הפודיום"
+      />
       <PricingSection />
       <RegisterCTA />
       <Footer />
@@ -365,9 +380,21 @@ function PricingSection() {
 /* ──────────────────────────────────────────────────────── REGISTER CTA */
 function RegisterCTA() {
   return (
-    <section className="relative py-24 px-5">
+    <section className="relative py-24 px-5 overflow-hidden">
+      {/* Atmospheric background photo */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        <Image
+          src="/gallery/podium-2.jpg"
+          alt=""
+          fill
+          className="object-cover opacity-25"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-ink-950 via-ink-950/85 to-ink-950" />
+      </div>
+
       <Reveal>
-        <div className="mx-auto max-w-4xl text-center card p-10 sm:p-14 border-electric-500/30 shadow-glow hover:shadow-glow-strong transition-shadow duration-700">
+        <div className="relative mx-auto max-w-4xl text-center card p-10 sm:p-14 border-electric-500/30 shadow-glow hover:shadow-glow-strong transition-shadow duration-700">
         <h2 className="grunge-text text-5xl sm:text-7xl text-white">
           מוכן <span className="text-electric-400 inline-block hover:scale-110 transition-transform">להילחם?</span>
         </h2>
@@ -422,6 +449,65 @@ function Footer() {
       <div className="mt-2">{COMPETITION.venue.address}</div>
       <div className="mt-1">© {new Date().getFullYear()} Calima — All rights reserved</div>
     </footer>
+  );
+}
+
+/* ──────────────────────────────────────────────────────── ACTION SHOT
+   Photo divider between sections — slides in from a side as you scroll. */
+function ActionShot({
+  src,
+  alt,
+  from,
+  caption,
+  kicker,
+}: {
+  src: string;
+  alt: string;
+  from: "left" | "right";
+  caption: string;
+  kicker: string;
+}) {
+  const isRight = from === "right";
+  return (
+    <section className="relative py-12 sm:py-20 px-4 sm:px-5 overflow-hidden">
+      <div className="mx-auto max-w-6xl grid sm:grid-cols-12 gap-6 items-center">
+        {/* Image */}
+        <div className={`sm:col-span-7 ${isRight ? "sm:order-last" : ""}`}>
+          <SlideIn from={from} distance={120}>
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-glow group">
+              <Image
+                src={src}
+                alt={alt}
+                width={1200}
+                height={1600}
+                sizes="(max-width: 640px) 100vw, 60vw"
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {/* Dark gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-transparent to-transparent pointer-events-none" />
+              {/* Corner badge */}
+              <div className="absolute top-3 start-3 px-2.5 py-1 rounded-md bg-electric-500/90 text-ink-950 text-xs font-bold not-italic uppercase tracking-wider">
+                {kicker}
+              </div>
+            </div>
+          </SlideIn>
+        </div>
+
+        {/* Caption */}
+        <div className="sm:col-span-5">
+          <SlideIn from={isRight ? "left" : "right"} delay={150} distance={60}>
+            <div className={`${isRight ? "text-end" : "text-start"} px-2`}>
+              <div className="text-electric-400 text-xs sm:text-sm uppercase tracking-[0.4em] mb-2 not-italic">
+                {kicker}
+              </div>
+              <h3 className="grunge-text text-4xl sm:text-5xl text-white leading-none">
+                {caption}
+              </h3>
+            </div>
+          </SlideIn>
+        </div>
+      </div>
+    </section>
   );
 }
 
