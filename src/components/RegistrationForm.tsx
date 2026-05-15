@@ -11,7 +11,7 @@ import {
   totalPrice,
   COMPETITION,
 } from "@/lib/competition";
-import { calcAge, isYoutubeUrl, ENDURANCE_POINTS } from "@/lib/schema";
+import { calcAge, isYoutubeUrl } from "@/lib/schema";
 import { FileDrop } from "./FileDrop";
 import { SignaturePad } from "./SignaturePad";
 import { CheckIcon, ArrowLeftIcon } from "./icons";
@@ -528,31 +528,33 @@ function StepVideos({
 
         {hasEndurance && (
           <div className="card p-5 border-electric-500/20">
-            <h3 className="grunge-text text-2xl text-electric-400">סיבולת</h3>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h3 className="grunge-text text-2xl text-electric-400">סיבולת</h3>
+              <a
+                href="/rules#routine"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-electric-400 underline hover:text-electric-300 not-italic"
+              >
+                המקצה המלא + חוקים
+              </a>
+            </div>
             <p className="mt-2 text-sm text-white/65 leading-6">
-              סרטון יוטיוב עד דקה. <span className="text-white font-bold">פורמט צבירת נקודות</span> — המטרה: לצבור כמה שיותר נקודות בדקה אחת.
+              צלם את עצמך מבצע את <span className="text-white font-bold">מקצה הקבלה המלא</span> (זכרים / נשים),
+              ללא עריכה. הצוות יפסול חזרות לא תקינות לפי חוקי השיפוט.
             </p>
 
-            {/* Points table */}
-            <div className="mt-4 rounded-lg overflow-hidden border border-white/10">
-              <table className="w-full text-sm">
-                <thead className="bg-ink-800/80 text-white/60">
-                  <tr>
-                    <th className="text-right p-2 font-semibold">תרגיל</th>
-                    <th className="text-left p-2 font-semibold">נקודות</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {ENDURANCE_POINTS.map((row) => (
-                    <tr key={row.exercise} className="hover:bg-white/[0.02]">
-                      <td className="p-2 text-white/90">{row.exercise}</td>
-                      <td className="p-2 text-left">
-                        <span className="grunge-text text-electric-400 text-xl">{row.points}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Mini routine preview */}
+            <div className="mt-4 rounded-lg overflow-hidden border border-white/10 bg-ink-800/40">
+              <div className="px-3 py-2 text-electric-400 text-[11px] uppercase tracking-[0.3em] border-b border-white/5 not-italic">
+                טעימה ממקצה הזכרים
+              </div>
+              <ul className="p-3 space-y-1 text-xs sm:text-sm text-white/85">
+                <li>50 מקבילים + 5 מתחים + 1 עליית כוח</li>
+                <li>40 שכיבות סמיכה + 10 מתחים + 2 עליות כוח</li>
+                <li>30 סקוואטים + 15 מתחים + 3 עליות כוח</li>
+                <li className="text-white/50">... ועוד 5 סטים. לחץ "המקצה המלא + חוקים" למעלה.</li>
+              </ul>
             </div>
 
             <div className="mt-4">
