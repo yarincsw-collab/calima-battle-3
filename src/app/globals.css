@@ -96,6 +96,50 @@ input, textarea, select, button {
   @apply relative overflow-hidden rounded-xl bg-ink-800/70 border border-white/5 backdrop-blur-sm;
 }
 
+/* ─── Accessibility toolkit (controlled by <A11yButton/>) ─── */
+html.a11y-contrast,
+html.a11y-contrast body {
+  background: #000 !important;
+  color: #fff !important;
+}
+html.a11y-contrast [class*="text-white\\/"] {
+  color: #fff !important;
+}
+html.a11y-contrast .bg-grunge-gradient,
+html.a11y-contrast .bg-ink-900\/60,
+html.a11y-contrast .bg-ink-900\/50,
+html.a11y-contrast .bg-ink-800\/80,
+html.a11y-contrast .bg-ink-800\/70 {
+  background: #000 !important;
+}
+
+html.a11y-greyscale body {
+  filter: grayscale(1);
+}
+
+html.a11y-underline a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+}
+
+html.a11y-no-anim *,
+html.a11y-no-anim *::before,
+html.a11y-no-anim *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Honor OS-level reduced motion preference too */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
