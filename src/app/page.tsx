@@ -467,67 +467,51 @@ function ActionShot({
 }) {
   const isRight = from === "right";
   return (
-    <section className="relative py-10 sm:py-20 px-4 sm:px-5 overflow-hidden">
-      {/* Soft cyan glow behind the cut-out figure */}
+    <section className="relative py-8 sm:py-20 px-4 sm:px-5 overflow-hidden">
+      {/* Layered backdrop: dark "stage" disc + cyan rim glow.
+          Dark disc gives the figure visual separation from the gradient page,
+          cyan ring outside it adds the "spotlight" feel without washing colors. */}
       <div
-        className={`absolute top-1/2 -translate-y-1/2 w-[70%] sm:w-[35%] aspect-square rounded-full bg-electric-500/20 blur-3xl pointer-events-none ${
-          isRight ? "end-[-15%]" : "start-[-15%]"
-        }`}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] sm:w-[42%] aspect-square pointer-events-none"
         aria-hidden
-      />
+      >
+        {/* Outer cyan ring */}
+        <div className="absolute inset-0 rounded-full bg-electric-500/20 blur-3xl" />
+        {/* Inner dark disc — makes skin tones pop against it */}
+        <div className="absolute inset-[15%] rounded-full bg-ink-950/60 blur-2xl" />
+      </div>
 
-      <div className="relative mx-auto max-w-6xl">
-        {/* MOBILE layout: caption top, image full-width below */}
-        <div className="sm:hidden">
-          <SlideIn from={isRight ? "left" : "right"} delay={0} distance={40}>
-            <div className={`mb-4 ${isRight ? "text-end" : "text-start"}`}>
-              <div className="text-electric-400 text-xs uppercase tracking-[0.4em] mb-2 not-italic">
+      {/* Single responsive layout — no duplicate mobile/desktop blocks */}
+      <div className="relative mx-auto max-w-6xl grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-6 items-center">
+        {/* Image — dominant on mobile (full-bleed), 7 cols on desktop */}
+        <div className={`order-2 sm:order-none sm:col-span-7 ${isRight ? "sm:order-last" : ""}`}>
+          <SlideIn from={from} distance={140} pop>
+            <div className="relative group">
+              <Image
+                src={src}
+                alt={alt}
+                width={1200}
+                height={1600}
+                className="relative w-full h-auto object-contain max-h-[70vh] sm:max-h-none transition-transform duration-700 group-hover:scale-105 drop-shadow-[0_25px_45px_rgba(27,164,224,0.5)]"
+                style={{ filter: "saturate(1.15) contrast(1.05)" }}
+                priority={false}
+              />
+            </div>
+          </SlideIn>
+        </div>
+
+        {/* Caption — above on mobile, side on desktop */}
+        <div className="order-1 sm:order-none sm:col-span-5">
+          <SlideIn from={isRight ? "left" : "right"} delay={120} distance={60}>
+            <div className={`${isRight ? "text-end" : "text-start"} sm:px-2`}>
+              <div className="text-electric-400 text-[10px] sm:text-sm uppercase tracking-[0.4em] mb-2 not-italic">
                 {kicker}
               </div>
-              <h3 className="grunge-text text-4xl text-white leading-none">
+              <h3 className="grunge-text text-4xl sm:text-5xl text-white leading-none">
                 {caption}
               </h3>
             </div>
           </SlideIn>
-          <SlideIn from={from} distance={140}>
-            <Image
-              src={src}
-              alt={alt}
-              width={1200}
-              height={1600}
-              className="block mx-auto w-auto max-h-[55vh] h-auto object-contain drop-shadow-[0_25px_45px_rgba(27,164,224,0.45)]"
-            />
-          </SlideIn>
-        </div>
-
-        {/* DESKTOP layout: image + caption side-by-side */}
-        <div className="hidden sm:grid sm:grid-cols-12 gap-6 items-center">
-          <div className={`sm:col-span-7 ${isRight ? "sm:order-last" : ""}`}>
-            <SlideIn from={from} distance={120}>
-              <div className="relative group">
-                <Image
-                  src={src}
-                  alt={alt}
-                  width={1200}
-                  height={1600}
-                  className="w-full h-auto object-contain transition-transform duration-700 group-hover:scale-105 drop-shadow-[0_25px_45px_rgba(27,164,224,0.35)]"
-                />
-              </div>
-            </SlideIn>
-          </div>
-
-          <div className="sm:col-span-5">
-            <SlideIn from={isRight ? "left" : "right"} delay={150} distance={60}>
-              <div className={`${isRight ? "text-end" : "text-start"} px-2`}>
-                <div className="text-electric-400 text-xs sm:text-sm uppercase tracking-[0.4em] mb-2 not-italic">
-                  {kicker}
-                </div>
-                <h3 className="grunge-text text-4xl sm:text-5xl text-white leading-none">
-                  {caption}
-                </h3>
-              </div>
-            </SlideIn>
-          </div>
         </div>
       </div>
     </section>
