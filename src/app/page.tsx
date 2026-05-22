@@ -34,11 +34,11 @@ export default function LandingPage() {
       <EventStrip />
       <DisciplinesSection />
       <ActionShot
-        src="/gallery/front-lever-cut.png"
-        alt="פריסטייל על המתח"
+        src="/gallery/champion-podium.png"
+        alt="זוכי תחרות קלימה Battles על הפודיום"
         from="right"
-        caption="פריסטייל ברמה הגבוהה ביותר"
-        kicker="על המתח"
+        caption="הרגע שכולם מחכים לו"
+        kicker="פודיום האלופים"
       />
       <JudgingSection />
       <LevelsSection />
