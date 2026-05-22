@@ -42,13 +42,6 @@ export default function LandingPage() {
       />
       <JudgingSection />
       <LevelsSection />
-      <ActionShot
-        src="/gallery/podium-1-cut.png"
-        alt="פודיום זוכים מתחרות קלימה Battles"
-        from="left"
-        caption="3 הזוכים — Calima Battles 2"
-        kicker="הפודיום"
-      />
       <PricingSection />
       <RegisterCTA />
       <Footer />
