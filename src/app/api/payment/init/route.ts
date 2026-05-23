@@ -25,7 +25,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "missing fields" }, { status: 400 });
     }
 
-    const origin = new URL(req.url).origin;
+    // Build the public origin. Railway proxies traffic to 0.0.0.0:8080 internally,
+    // so req.url returns "https://localhost:8080" which is unusable as a callback.
+    // Prefer the proxy headers; fall back to a manually-set NEXT_PUBLIC_APP_URL.
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const origin =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (host ? `${proto}://${host}` : new URL(req.url).origin);
     const result = await createTokenIframe({
       registrationId: body.registrationId,
       amount: body.amount,
