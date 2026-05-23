@@ -736,30 +736,49 @@ function StepPayment({
   state: FormState;
   update: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
 }) {
-  // Build the gateway URL on the client (also reads PAYMENT_MODE via NEXT_PUBLIC).
-  // The return URL points back to this page; the callback parses the token
-  // and bounces here with the token in the URL.
-  const [showFrame, setShowFrame] = useState(false);
-  const returnUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/api/payment/callback?Order=${registrationId}`
-      : "";
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Listen for the redirect back from the gateway/mock and capture the token.
+  // After the user finishes on the iCount iframe, they're redirected back
+  // with the token in the URL hash. Pick it up here.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
-    const token = url.searchParams.get("token");
+    const token = url.searchParams.get("token") || url.searchParams.get("cc_token");
     if (token) {
       update("paymentToken", token);
-      update("paymentLast4", url.searchParams.get("last4") || "");
+      update("paymentLast4", url.searchParams.get("last4") || url.searchParams.get("cc_last4") || "");
       update("paymentExpiry", url.searchParams.get("expiry") || "");
-      // Clean the query string so it doesn't get re-applied on refresh.
       window.history.replaceState({}, "", window.location.pathname);
-      setShowFrame(false);
+      setIframeUrl(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function openPaymentFrame() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/payment/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          registrationId,
+          amount: price,
+          fullName: state.fullName,
+          email: state.email,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "failed to open payment page");
+      setIframeUrl(json.iframe_url as string);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const hasToken = Boolean(state.paymentToken);
 
@@ -782,7 +801,7 @@ function StepPayment({
           </div>
         ) : hasToken ? (
           <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-4 text-emerald-200 text-sm flex items-center justify-between">
-            <span>✓ פרטי האשראי נשמרו בטוקן מאובטח (סופרות אחרונות: {state.paymentLast4 || "****"})</span>
+            <span>✓ פרטי האשראי נשמרו בטוקן מאובטח{state.paymentLast4 ? ` (סופרות אחרונות: ${state.paymentLast4})` : ""}</span>
             <button
               type="button"
               onClick={() => update("paymentToken", "")}
@@ -791,19 +810,30 @@ function StepPayment({
               החלף כרטיס
             </button>
           </div>
-        ) : showFrame ? (
-          <div className="rounded-xl overflow-hidden border border-white/10 bg-ink-800">
+        ) : iframeUrl ? (
+          <div className="rounded-xl overflow-hidden border border-white/10 bg-white">
             <iframe
-              src={`/api/payment/mock?reg=${registrationId}&amount=${price}&return=${encodeURIComponent(returnUrl)}`}
+              src={iframeUrl}
               className="w-full"
-              style={{ height: 480, border: 0 }}
-              title="Israkart payment"
+              style={{ height: 520, border: 0 }}
+              title="סליקה מאובטחת"
             />
           </div>
         ) : (
-          <button type="button" onClick={() => setShowFrame(true)} className="btn-primary w-full">
-            פתח את עמוד הסליקה המאובטח
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={openPaymentFrame}
+              disabled={loading}
+              className="btn-primary w-full disabled:opacity-50"
+            >
+              {loading ? "פותח עמוד סליקה..." : "פתח את עמוד הסליקה המאובטח 🔒"}
+            </button>
+            {error && <div className="text-sm text-red-400">⚠ {error}</div>}
+            <p className="text-xs text-white/40 text-center leading-5">
+              פרטי האשראי נקלטים ישירות בשרת המאובטח של ספק הסליקה (iCount). לא נשמרים אצלנו.
+            </p>
+          </>
         )}
       </div>
     </div>
