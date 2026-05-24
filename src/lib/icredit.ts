@@ -94,23 +94,27 @@ export async function createTokenIframe(opts: {
   const res = await call<{ URL: string; PublicSaleToken: string }>(
     "PaymentPageRequest.svc/GetUrl",
     {
-      SaleType: 4, // J5 / tokenisation only — no charge happens here
-      Currency: 1, // 1 = ILS
-      Amount: opts.amount,
+      // iCredit's PaymentPageRequest contract uses PascalCase + UnitPrice
+      // (NOT Price), and requires OrderId at the top level.
+      OrderId: opts.registrationId,
+      Description: `Calima Battles 3 — הרשמה`,
+      SaleType: 4,         // 4 = J5 / Tokenisation only — no charge yet
+      Currency: 1,         // 1 = ILS
       MaxPayments: 1,
+      CreditFromPayment: 1,
+      Items: [
+        {
+          Id: opts.registrationId,
+          Description: "Calima Battles 3 — הרשמה",
+          Quantity: 1,
+          UnitPrice: opts.amount,
+          ItemType: 1,
+        },
+      ],
       CustomerFirstName: first || opts.customerName,
       CustomerLastName: last,
       EmailAddress: opts.customerEmail,
       PhoneNumber: opts.customerPhone || "",
-      Items: [
-        {
-          Id: opts.registrationId,
-          Description: `Calima Battles 3 — הרשמה`,
-          Quantity: 1,
-          Price: opts.amount,
-          ItemType: 1,
-        },
-      ],
       HideItemList: false,
       IPNURL: opts.notifyUrl,
       RedirectURL: opts.successUrl,
@@ -164,9 +168,11 @@ export async function chargeToken(opts: {
       Token?: string;
     }>("CardTokenCharge.svc/Charge", {
       Token: opts.ccToken,
-      Amount: opts.amount,
+      OrderId: opts.registrationId,
+      Description: opts.itemDescription,
       Currency: 1,
       MaxPayments: 1,
+      CreditFromPayment: 1,
       CustomerFirstName: first || opts.customerName,
       CustomerLastName: last,
       EmailAddress: opts.customerEmail,
@@ -175,7 +181,7 @@ export async function chargeToken(opts: {
           Id: opts.registrationId,
           Description: opts.itemDescription,
           Quantity: 1,
-          Price: opts.amount,
+          UnitPrice: opts.amount,
           ItemType: 1,
         },
       ],
