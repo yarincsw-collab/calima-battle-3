@@ -94,23 +94,22 @@ export async function createTokenIframe(opts: {
   const res = await call<{ URL: string; PublicSaleToken: string }>(
     "PaymentPageRequest.svc/GetUrl",
     {
-      // iCredit's PaymentPageRequest contract uses PascalCase + UnitPrice
-      // (NOT Price), and requires OrderId at the top level.
-      OrderId: opts.registrationId,
-      Description: `Calima Battles 3 — הרשמה`,
-      SaleType: 4,         // 4 = J5 / Tokenisation only — no charge yet
-      Currency: 1,         // 1 = ILS
-      MaxPayments: 1,
-      CreditFromPayment: 1,
+      // Per iCredit GetUrl contract: required = GroupPrivateToken + Items[].
+      // Items only carry Description / Quantity / UnitPrice (no ItemType / Id).
+      // Top-level uses `Order` (string), no `Description` or `Amount` here.
       Items: [
         {
-          Id: opts.registrationId,
           Description: "Calima Battles 3 — הרשמה",
           Quantity: 1,
           UnitPrice: opts.amount,
-          ItemType: 1,
         },
       ],
+      SaleType: 4,        // 4 = J5 / tokenisation only — no charge yet
+      Currency: 1,        // 1 = ILS
+      MaxPayments: 1,
+      CreditFromPayment: 1,
+      Order: opts.registrationId,
+      Custom1: opts.registrationId,
       CustomerFirstName: first || opts.customerName,
       CustomerLastName: last,
       EmailAddress: opts.customerEmail,
@@ -119,7 +118,7 @@ export async function createTokenIframe(opts: {
       IPNURL: opts.notifyUrl,
       RedirectURL: opts.successUrl,
       ExemptVAT: false,
-      Custom1: opts.registrationId,
+      DocumentLanguage: "he",
     }
   );
 
@@ -168,24 +167,21 @@ export async function chargeToken(opts: {
       Token?: string;
     }>("CardTokenCharge.svc/Charge", {
       Token: opts.ccToken,
-      OrderId: opts.registrationId,
-      Description: opts.itemDescription,
-      Currency: 1,
-      MaxPayments: 1,
-      CreditFromPayment: 1,
-      CustomerFirstName: first || opts.customerName,
-      CustomerLastName: last,
-      EmailAddress: opts.customerEmail,
       Items: [
         {
-          Id: opts.registrationId,
           Description: opts.itemDescription,
           Quantity: 1,
           UnitPrice: opts.amount,
-          ItemType: 1,
         },
       ],
+      Currency: 1,
+      MaxPayments: 1,
+      CreditFromPayment: 1,
+      Order: opts.registrationId,
       Custom1: opts.registrationId,
+      CustomerFirstName: first || opts.customerName,
+      CustomerLastName: last,
+      EmailAddress: opts.customerEmail,
     });
 
     return {
