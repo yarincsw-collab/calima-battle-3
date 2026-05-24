@@ -3,11 +3,10 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 /**
- * Diagnostic endpoint — confirms which iCount account our env vars actually
- * authenticate against. Calls iCount's `info/whoami`-style ping and returns
- * the raw response so we can see the exact error.
+ * Diagnostic endpoint — confirms our iCredit + Rivhit credentials work.
+ * Protected by ADMIN_API_KEY so it's not publicly probable.
  *
- * Protected by ADMIN_API_KEY so it can't be probed publicly.
+ *   GET /api/payment/diag?key=<ADMIN_API_KEY>
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -16,32 +15,45 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const cid = process.env.ICOUNT_CID;
-  const user = process.env.ICOUNT_USER;
-  const api_token = process.env.ICOUNT_API_TOKEN;
+  const icreditToken = process.env.ICREDIT_GROUP_PRIVATE_TOKEN;
+  const rivhitToken = process.env.RIVHIT_API_TOKEN;
 
   const present = {
-    ICOUNT_CID: cid ? `set (${cid.length} chars)` : "MISSING",
-    ICOUNT_USER: user ? `set (${user.length} chars)` : "MISSING",
-    ICOUNT_API_TOKEN: api_token ? `set (${api_token.length} chars)` : "MISSING",
+    ICREDIT_GROUP_PRIVATE_TOKEN: icreditToken ? `set (${icreditToken.length} chars)` : "MISSING",
+    RIVHIT_API_TOKEN: rivhitToken ? `set (${rivhitToken.length} chars)` : "MISSING",
+    PAYMENT_MODE: process.env.PAYMENT_MODE || "(default: mock)",
   };
 
-  // Try a minimal authenticated call — info/account is free + lightweight
-  try {
-    const res = await fetch("https://api.icount.co.il/api/v3.php/client/info", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cid, user, api_token }),
-    });
-    const text = await res.text();
-    let parsed: unknown;
+  // Test iCredit: try requesting a tiny iframe URL to verify auth.
+  let icreditResult: unknown = "(skipped — token missing)";
+  if (icreditToken) {
     try {
-      parsed = JSON.parse(text);
-    } catch {
-      parsed = text;
+      const res = await fetch("https://icredit.rivhit.co.il/API/PaymentPageRequest.svc/GetUrl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          GroupPrivateToken: icreditToken,
+          SaleType: 4,
+          Currency: 1,
+          Amount: 1,
+          CustomerFirstName: "Diag",
+          CustomerLastName: "Test",
+          EmailAddress: "diag@calima.local",
+          Items: [{ Id: "diag", Description: "Diag", Quantity: 1, Price: 1, ItemType: 1 }],
+          IPNURL: "https://example.com/ipn",
+          RedirectURL: "https://example.com/ok",
+        }),
+      });
+      const text = await res.text();
+      try {
+        icreditResult = { httpStatus: res.status, body: JSON.parse(text) };
+      } catch {
+        icreditResult = { httpStatus: res.status, body: text.slice(0, 400) };
+      }
+    } catch (err) {
+      icreditResult = { error: (err as Error).message };
     }
-    return NextResponse.json({ present, httpStatus: res.status, response: parsed });
-  } catch (err) {
-    return NextResponse.json({ present, error: (err as Error).message }, { status: 500 });
   }
+
+  return NextResponse.json({ present, icredit: icreditResult });
 }

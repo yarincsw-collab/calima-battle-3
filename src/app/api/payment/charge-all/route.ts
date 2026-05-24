@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { chargeToken } from "@/lib/icount";
+import { chargeToken } from "@/lib/icredit";
 import { loadAllRegistrations, updateRegistrationStatus } from "@/lib/googleSheets";
 
 export const runtime = "nodejs";

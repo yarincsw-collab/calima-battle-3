@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createTokenIframe } from "@/lib/icount";
+import { createTokenIframe } from "@/lib/icredit";
 
 export const runtime = "nodejs";
 
