@@ -52,9 +52,9 @@ export async function POST(req: Request) {
         documents_via_whatsapp: viaWa,
         signature_url: data.signatureUrl,
         liability_accepted_at: new Date().toISOString(),
-        payment_token: data.paymentToken,
-        payment_last4: data.paymentLast4 ?? null,
-        payment_expiry: data.paymentExpiry ?? null,
+        payment_token: null,
+        payment_last4: null,
+        payment_expiry: null,
         payment_status: viaWa ? "pending_documents" : "pending_admin_approval",
         notes,
       });
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
         signatureUrl: data.signatureUrl,
         parentName: data.parentName ?? "",
         parentPhone: data.parentPhone ?? "",
-        paymentToken: data.paymentToken,
+        paymentToken: "",
         paymentStatus: viaWa ? "pending_documents" : "pending_admin_approval",
         notes,
       });

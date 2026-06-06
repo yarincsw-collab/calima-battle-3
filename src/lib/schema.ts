@@ -52,10 +52,9 @@ export const registrationSchema = z
       errorMap: () => ({ message: "יש לאשר את הצהרת האחריות" }),
     }),
 
-    // Payment token returned by Israkart hosted page
-    paymentToken: z.string().min(4, "חובה להזין פרטי אשראי"),
-    paymentLast4: z.string().optional(),
-    paymentExpiry: z.string().optional(),
+    // Payment fields removed — payment is handled out-of-band: after admin
+    // approval, athletes receive a payment link via WhatsApp/SMS from
+    // iCredit. See the /admin dashboard for the workflow.
   })
   .superRefine((data, ctx) => {
     // 1. Documents: either uploaded OR explicitly committed to WhatsApp

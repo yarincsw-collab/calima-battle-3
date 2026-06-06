@@ -18,9 +18,11 @@ export default function SuccessPage({ searchParams }: { searchParams: { id?: str
         <h1 className="grunge-text text-4xl sm:text-5xl text-white mt-6">
           ההרשמה התקבלה!
         </h1>
-        <p className="mt-4 text-white/70">
-          תודה רבה. נחזור אליך במייל לאחר אישור ההשתתפות. החיוב יבוצע כשבועיים לפני התחרות —
-          כפי שמצוין בטופס.
+        <p className="mt-4 text-white/70 leading-7">
+          תודה רבה. הצוות יצפה בסרטון הקבלה שלך ויחזיר תשובה תוך מספר ימים. <br />
+          <span className="text-white font-semibold">אם תאושר/י</span> — תקבל/י קישור תשלום
+          אישי ב-WhatsApp/מייל דרך iCredit. <br />
+          <span className="text-white/85">אם לא תאושר/י — לא יישלח קישור ולא יבוצע חיוב כלל.</span>
         </p>
 
         {searchParams.id && (

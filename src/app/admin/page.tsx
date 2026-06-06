@@ -30,7 +30,6 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [busy, setBusy] = useState<Record<string, boolean>>({});
-  const [chargeAllResult, setChargeAllResult] = useState<string | null>(null);
 
   // Load key from storage on mount
   useEffect(() => {
@@ -78,44 +77,37 @@ export default function AdminPage() {
     }
   }
 
-  async function chargeOne(reg: Reg) {
-    if (!confirm(`לחייב ${reg.fullName} ב-${reg.totalPrice} ₪?`)) return;
+  /** Open WhatsApp with a pre-filled payment-request message to the athlete. */
+  function sendWhatsApp(reg: Reg) {
+    // Normalise the phone: 050-1234567 → 972501234567 for wa.me
+    const raw = (reg.phone || "").replace(/\D/g, "");
+    const intl = raw.startsWith("0") ? "972" + raw.slice(1) : raw;
+    const msg =
+      `שלום ${reg.fullName}! 🥇\n\n` +
+      `הרשמתך לתחרות *Calima Battles 3* אושרה.\n` +
+      `מקצה: ${reg.categories}\n` +
+      `סכום לתשלום: *${reg.totalPrice} ₪*\n\n` +
+      `אנא שלם דרך הקישור האישי הבא תוך 7 ימים:\n` +
+      `[כאן תדביק את קישור התשלום מ-iCredit]\n\n` +
+      `בהצלחה,\n` +
+      `קלימה מתחם קליסטניקס`;
+    const url = `https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  }
+
+  /** Mark a registration as paid after the athlete has paid via iCredit. */
+  async function markPaid(reg: Reg) {
+    if (!confirm(`לסמן את ${reg.fullName} כמשולם?`)) return;
     setBusy((b) => ({ ...b, [reg.registrationId]: true }));
     try {
-      const res = await fetch("/api/payment/charge", {
+      await fetch("/api/admin/status", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
-        body: JSON.stringify({ registrationId: reg.registrationId }),
+        body: JSON.stringify({ registrationId: reg.registrationId, paymentStatus: "charged" }),
       });
-      const json = await res.json();
-      if (!res.ok) alert(`שגיאה: ${json.error || res.statusText}`);
       await refresh();
     } finally {
       setBusy((b) => ({ ...b, [reg.registrationId]: false }));
-    }
-  }
-
-  async function chargeAll() {
-    const approved = (registrations ?? []).filter((r) => r.paymentStatus === "approved");
-    if (!approved.length) {
-      alert("אין הרשמות עם סטטוס approved");
-      return;
-    }
-    if (!confirm(`לחייב ${approved.length} מתחרים מאושרים? לא ניתן לבטל לאחר אישור.`)) return;
-    setLoading(true);
-    setChargeAllResult(null);
-    try {
-      const res = await fetch("/api/payment/charge-all", {
-        method: "POST",
-        headers: { "x-admin-key": adminKey },
-      });
-      const json = await res.json();
-      setChargeAllResult(JSON.stringify(json.summary ?? json, null, 2));
-      await refresh();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -213,28 +205,16 @@ export default function AdminPage() {
         <Stat label="חיוב נכשל" value={stats.failed} color="text-rose-500" />
       </div>
 
-      {/* Bulk charge */}
-      <div className="card p-4 mb-6 border-electric-500/30 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="text-white font-bold not-italic">חיוב כלל המאושרים</div>
-          <div className="text-white/55 text-xs not-italic">
-            יחייב את {stats.approved} המתחרים המאושרים דרך iCount + יוציא קבלות אוטומטית
-          </div>
-        </div>
-        <button
-          onClick={chargeAll}
-          disabled={loading || stats.approved === 0}
-          className="btn-primary not-italic disabled:opacity-40"
-        >
-          💳 חייב כעת ({stats.approved})
-        </button>
+      {/* Payment workflow help */}
+      <div className="card p-4 mb-6 border-electric-500/30 not-italic">
+        <div className="text-white font-bold mb-1">תהליך התשלום</div>
+        <ol className="text-white/70 text-sm leading-7 list-decimal pr-5 space-y-1">
+          <li>סקור הרשמה + סרטון → לחץ <span className="text-emerald-300 font-bold">✓ אשר</span> או <span className="text-red-300 font-bold">✗ דחה</span></li>
+          <li>למאושר: לחץ <span className="text-electric-300 font-bold">📱 שלח דרישת תשלום</span> — ייפתח WhatsApp עם הודעה מוכנה</li>
+          <li>פתח iCredit בטאב נפרד → צור קישור תשלום לסכום הנכון → העתק והדבק בהודעה → שלח</li>
+          <li>כשהאתלט שילם (תראה ב-iCredit) → לחץ <span className="text-sky-300 font-bold">✓ סמן כמשולם</span></li>
+        </ol>
       </div>
-
-      {chargeAllResult && (
-        <pre className="card p-4 mb-6 text-xs overflow-auto whitespace-pre-wrap text-emerald-300 not-italic" dir="ltr">
-          {chargeAllResult}
-        </pre>
-      )}
 
       {/* Filter chips */}
       <div className="flex flex-wrap gap-2 mb-4 not-italic">
@@ -275,7 +255,8 @@ export default function AdminPage() {
               busy={!!busy[r.registrationId]}
               onApprove={() => setStatus(r, "approved")}
               onReject={() => setStatus(r, "rejected")}
-              onCharge={() => chargeOne(r)}
+              onSendWhatsApp={() => sendWhatsApp(r)}
+              onMarkPaid={() => markPaid(r)}
             />
           ))}
         </div>
@@ -308,13 +289,15 @@ function RegRow({
   busy,
   onApprove,
   onReject,
-  onCharge,
+  onSendWhatsApp,
+  onMarkPaid,
 }: {
   reg: Reg;
   busy: boolean;
   onApprove: () => void;
   onReject: () => void;
-  onCharge: () => void;
+  onSendWhatsApp: () => void;
+  onMarkPaid: () => void;
 }) {
   const status = statusLabel(reg.paymentStatus);
   return (
@@ -365,10 +348,15 @@ function RegRow({
                 className="text-xs px-3 py-1.5 rounded-md bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30 disabled:opacity-30 not-italic">
           ✗ דחה
         </button>
-        <button onClick={onCharge}
-                disabled={busy || reg.paymentStatus !== "approved" || !reg.paymentToken || reg.totalPrice === 0}
-                className="text-xs px-3 py-1.5 rounded-md bg-electric-500/20 text-electric-300 border border-electric-500/40 hover:bg-electric-500/30 disabled:opacity-30 not-italic">
-          💳 חייב כעת
+        <button onClick={onSendWhatsApp}
+                disabled={busy || reg.paymentStatus !== "approved" || reg.totalPrice === 0}
+                className="text-xs px-3 py-1.5 rounded-md bg-green-500/20 text-green-300 border border-green-500/40 hover:bg-green-500/30 disabled:opacity-30 not-italic">
+          📱 שלח דרישת תשלום
+        </button>
+        <button onClick={onMarkPaid}
+                disabled={busy || reg.paymentStatus === "charged" || reg.paymentStatus === "rejected"}
+                className="text-xs px-3 py-1.5 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 disabled:opacity-30 not-italic">
+          ✓ סמן כמשולם
         </button>
       </div>
     </div>

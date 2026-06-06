@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CATEGORIES,
@@ -16,7 +16,7 @@ import { FileDrop } from "./FileDrop";
 import { SignaturePad } from "./SignaturePad";
 import { CheckIcon, ArrowLeftIcon } from "./icons";
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 interface FormState {
   categories: CategoryId[];
@@ -34,9 +34,6 @@ interface FormState {
   signatureDataUrl: string | null;
   signatureUrl: string;
   liabilityAccepted: boolean;
-  paymentToken: string;
-  paymentLast4: string;
-  paymentExpiry: string;
 }
 
 const emptyState: FormState = {
@@ -55,9 +52,6 @@ const emptyState: FormState = {
   signatureDataUrl: null,
   signatureUrl: "",
   liabilityAccepted: false,
-  paymentToken: "",
-  paymentLast4: "",
-  paymentExpiry: "",
 };
 
 export function RegistrationForm() {
@@ -116,9 +110,6 @@ export function RegistrationForm() {
         return Boolean(state.healthDocUrl) && (!isMinor || Boolean(state.parentConsentUrl));
       case 5:
         return state.liabilityAccepted && Boolean(state.signatureDataUrl);
-      case 6:
-        // Either paid (token present) or amount is 0
-        return price === 0 || Boolean(state.paymentToken);
       default:
         return false;
     }
@@ -148,9 +139,6 @@ export function RegistrationForm() {
       const signatureUrl = await uploadSignature();
       if (!signatureUrl) throw new Error("חתימה לא הועלתה");
 
-      // Mock payment token if amount is 0 (free Calima endurance)
-      const paymentToken = state.paymentToken || (price === 0 ? "FREE-NO-TOKEN" : "");
-
       const payload = {
         categories: state.categories,
         fullName: state.fullName,
@@ -166,9 +154,6 @@ export function RegistrationForm() {
         documentsViaWhatsapp: state.documentsViaWhatsapp,
         signatureUrl,
         liabilityAccepted: true as const,
-        paymentToken,
-        paymentLast4: state.paymentLast4 || undefined,
-        paymentExpiry: state.paymentExpiry || undefined,
       };
 
       const res = await fetch("/api/register", {
@@ -235,16 +220,6 @@ export function RegistrationForm() {
           />
         )}
 
-        {step === 6 && (
-          <StepPayment
-            price={price}
-            categories={state.categories}
-            registrationId={registrationId}
-            state={state}
-            update={update}
-          />
-        )}
-
         {error && <div className="mt-4 text-sm text-red-400">⚠ {error}</div>}
 
         <div className="mt-8 flex items-center justify-between gap-3">
@@ -257,7 +232,7 @@ export function RegistrationForm() {
             חזרה
           </button>
 
-          {step < 6 ? (
+          {step < 5 ? (
             <button
               type="button"
               disabled={!canAdvance()}
@@ -286,7 +261,7 @@ export function RegistrationForm() {
 
 /* ─────────────────────────────────────── stepper */
 function Stepper({ step }: { step: Step }) {
-  const labels = ["מקצה", "פרטים", "סרטון", "מסמכים", "אחריות", "תשלום"];
+  const labels = ["מקצה", "פרטים", "סרטון", "מסמכים", "אחריות"];
   return (
     <ol className="flex items-center gap-2 text-xs sm:text-sm">
       {labels.map((label, i) => {
@@ -698,9 +673,12 @@ function StepWaiver({
           המאמנים, צוות המתחם וכל גורם נלווה מכל אחריות נזיקית, ישירה או עקיפה, הנובעת מהשתתפותי.
         </p>
         <p className="mt-2">
-          הנני מאשר/ת כי תאריך החיוב בפועל יהיה כשבועיים לפני התחרות, וכי במידה ולא אאושר להשתתף
-          בתחרות לא יבוצע חיוב כלל. כמו כן הנני מאשר/ת צילום ושימוש בתמונות / סרטונים שלי לצרכי
-          תיעוד וקידום של קלימה.
+          תהליך התשלום: ידוע לי כי לא יידרשו ממני פרטי אשראי במעמד ההרשמה הזו. במידה ואאושר
+          להשתתף בתחרות, אקבל ב-WhatsApp/מייל קישור תשלום אישי דרך iCredit, ועליי לשלם דרכו
+          תוך 7 ימים מקבלת הקישור. במידה ולא אאושר — לא יישלח קישור ולא יבוצע חיוב כלל.
+        </p>
+        <p className="mt-2">
+          הנני מאשר/ת צילום ושימוש בתמונות / סרטונים שלי לצרכי תיעוד וקידום של קלימה.
         </p>
       </div>
 
@@ -717,124 +695,6 @@ function StepWaiver({
       <div className="mt-5">
         <div className="text-sm font-semibold text-white/90 mb-2">חתימה דיגיטלית</div>
         <SignaturePad onChange={onSign} />
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────── step 6 — payment */
-function StepPayment({
-  price,
-  categories,
-  registrationId,
-  state,
-  update,
-}: {
-  price: number;
-  categories: CategoryId[];
-  registrationId: string;
-  state: FormState;
-  update: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
-}) {
-  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // After the user finishes on the iCount iframe, they're redirected back
-  // with the token in the URL hash. Pick it up here.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const url = new URL(window.location.href);
-    const token = url.searchParams.get("token") || url.searchParams.get("cc_token");
-    if (token) {
-      update("paymentToken", token);
-      update("paymentLast4", url.searchParams.get("last4") || url.searchParams.get("cc_last4") || "");
-      update("paymentExpiry", url.searchParams.get("expiry") || "");
-      window.history.replaceState({}, "", window.location.pathname);
-      setIframeUrl(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function openPaymentFrame() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/payment/init", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          registrationId,
-          amount: price,
-          fullName: state.fullName,
-          email: state.email,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "failed to open payment page");
-      setIframeUrl(json.iframe_url as string);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const hasToken = Boolean(state.paymentToken);
-
-  return (
-    <div>
-      <StepTitle title="פרטי אשראי" subtitle={COMPETITION.chargeNote} />
-
-      <div className="space-y-4">
-        <div className="card p-4 border-electric-500/30">
-          <div className="flex items-center justify-between">
-            <span className="text-white/80 text-sm">סה״כ לחיוב (בעת אישור ההשתתפות):</span>
-            <span className="grunge-text text-3xl text-electric-400">{price === 0 ? "חינם" : `${price} ₪`}</span>
-          </div>
-          <div className="mt-2 text-xs text-white/55">מקצים: {categories.map((c) => categoryById(c)?.shortLabel).join(", ")}</div>
-        </div>
-
-        {price === 0 ? (
-          <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-4 text-emerald-200 text-sm">
-            ✓ המקצה שבחרת ללא עלות. אין צורך בפרטי אשראי. ניתן לסיים את ההרשמה.
-          </div>
-        ) : hasToken ? (
-          <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-4 text-emerald-200 text-sm flex items-center justify-between">
-            <span>✓ פרטי האשראי נשמרו בטוקן מאובטח{state.paymentLast4 ? ` (סופרות אחרונות: ${state.paymentLast4})` : ""}</span>
-            <button
-              type="button"
-              onClick={() => update("paymentToken", "")}
-              className="text-xs text-white/70 underline hover:text-white"
-            >
-              החלף כרטיס
-            </button>
-          </div>
-        ) : iframeUrl ? (
-          <div className="rounded-xl overflow-hidden border border-white/10 bg-white">
-            <iframe
-              src={iframeUrl}
-              className="w-full"
-              style={{ height: 520, border: 0 }}
-              title="סליקה מאובטחת"
-            />
-          </div>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={openPaymentFrame}
-              disabled={loading}
-              className="btn-primary w-full disabled:opacity-50"
-            >
-              {loading ? "פותח עמוד סליקה..." : "פתח את עמוד הסליקה המאובטח 🔒"}
-            </button>
-            {error && <div className="text-sm text-red-400">⚠ {error}</div>}
-            <p className="text-xs text-white/40 text-center leading-5">
-              פרטי האשראי נקלטים ישירות בשרת המאובטח של ספק הסליקה (iCount). לא נשמרים אצלנו.
-            </p>
-          </>
-        )}
       </div>
     </div>
   );
