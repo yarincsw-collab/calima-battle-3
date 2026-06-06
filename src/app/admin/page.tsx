@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { CATEGORIES } from "@/lib/competition";
+
+// Same Sheet ID we wire to the rest of the app via env on the server.
+// Hard-coded here so the admin gets a one-click open link to the sheet.
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/11ExRyv5B4w3xkZx66R7uwmzCHYp84fTwv3XAj-3fy18";
 
 interface Reg {
   rowNumber: number;
@@ -29,6 +35,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [busy, setBusy] = useState<Record<string, boolean>>({});
 
   // Load key from storage on mount
@@ -137,10 +144,20 @@ export default function AdminPage() {
 
   const filtered = useMemo(() => {
     if (!registrations) return [];
-    if (statusFilter === "all") return registrations;
-    if (statusFilter === "pending") return registrations.filter((r) => !r.paymentStatus || r.paymentStatus === "pending_admin_approval");
-    return registrations.filter((r) => r.paymentStatus === statusFilter);
-  }, [registrations, statusFilter]);
+    let rows = registrations;
+    // Status filter
+    if (statusFilter === "pending") {
+      rows = rows.filter((r) => !r.paymentStatus || r.paymentStatus === "pending_admin_approval");
+    } else if (statusFilter !== "all") {
+      rows = rows.filter((r) => r.paymentStatus === statusFilter);
+    }
+    // Category filter — Sheet stores Hebrew labels in `categories`, joined with " | "
+    if (categoryFilter !== "all") {
+      const targetLabel = CATEGORIES.find((c) => c.id === categoryFilter)?.label ?? "";
+      rows = rows.filter((r) => r.categories.includes(targetLabel));
+    }
+    return rows;
+  }, [registrations, statusFilter, categoryFilter]);
 
   /* ─── Login screen ─── */
   if (!adminKey) {
@@ -186,6 +203,14 @@ export default function AdminPage() {
           <p className="text-white/50 text-sm not-italic">Calima Battles 3 — Admin</p>
         </div>
         <div className="flex items-center gap-2 not-italic">
+          <a
+            href={SHEET_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-ghost text-xs not-italic"
+          >
+            📊 פתח Google Sheet
+          </a>
           <button onClick={refresh} className="btn-ghost text-xs not-italic" disabled={loading}>
             {loading ? "מרענן..." : "🔄 רענן"}
           </button>
@@ -216,28 +241,76 @@ export default function AdminPage() {
         </ol>
       </div>
 
-      {/* Filter chips */}
-      <div className="flex flex-wrap gap-2 mb-4 not-italic">
-        {[
-          { v: "all",      label: "הכל",      n: stats.total },
-          { v: "pending",  label: "ממתינים",   n: stats.pending },
-          { v: "approved", label: "מאושרים",   n: stats.approved },
-          { v: "rejected", label: "נדחו",     n: stats.rejected },
-          { v: "charged",  label: "חויבו",    n: stats.charged },
-          { v: "payment_failed", label: "נכשלו", n: stats.failed },
-        ].map((f) => (
+      {/* Status filter chips */}
+      <div className="not-italic">
+        <div className="text-white/50 text-xs uppercase tracking-widest mb-2">סטטוס</div>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            { v: "all",      label: "הכל",      n: stats.total },
+            { v: "pending",  label: "ממתינים",   n: stats.pending },
+            { v: "approved", label: "מאושרים",   n: stats.approved },
+            { v: "rejected", label: "נדחו",     n: stats.rejected },
+            { v: "charged",  label: "חויבו",    n: stats.charged },
+            { v: "payment_failed", label: "נכשלו", n: stats.failed },
+          ].map((f) => (
+            <button
+              key={f.v}
+              onClick={() => setStatusFilter(f.v)}
+              className={`px-3 py-1.5 rounded-full text-xs border transition ${
+                statusFilter === f.v
+                  ? "bg-electric-500 text-ink-950 border-electric-500"
+                  : "border-white/15 text-white/70 hover:border-electric-500/40"
+              }`}
+            >
+              {f.label} <span className="opacity-60">({f.n})</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Category filter chips — match the 7 Sheet tabs */}
+      <div className="not-italic">
+        <div className="text-white/50 text-xs uppercase tracking-widest mb-2">מקצה</div>
+        <div className="flex flex-wrap gap-2 mb-4">
           <button
-            key={f.v}
-            onClick={() => setStatusFilter(f.v)}
+            onClick={() => setCategoryFilter("all")}
             className={`px-3 py-1.5 rounded-full text-xs border transition ${
-              statusFilter === f.v
+              categoryFilter === "all"
                 ? "bg-electric-500 text-ink-950 border-electric-500"
                 : "border-white/15 text-white/70 hover:border-electric-500/40"
             }`}
           >
-            {f.label} <span className="opacity-60">({f.n})</span>
+            הכל
           </button>
-        ))}
+          {CATEGORIES.map((c) => {
+            const count = (registrations ?? []).filter((r) =>
+              r.categories.includes(c.label)
+            ).length;
+            const emoji = c.id === "freestyle_pro_national"
+              ? "🥇"
+              : c.id.startsWith("freestyle_national") || c.id.startsWith("endurance_national")
+              ? "⭐"
+              : c.id.includes("_calima")
+              ? "🏠"
+              : "👩";
+            return (
+              <button
+                key={c.id}
+                onClick={() => setCategoryFilter(c.id)}
+                className={`px-3 py-1.5 rounded-full text-xs border transition ${
+                  categoryFilter === c.id
+                    ? "bg-electric-500 text-ink-950 border-electric-500"
+                    : "border-white/15 text-white/70 hover:border-electric-500/40"
+                }`}
+                title={c.label}
+              >
+                {emoji} {c.shortLabel} <span className="opacity-60 text-[10px]">
+                  {c.day === "freestyle" ? "פריסטייל" : "סיבולת"} ({count})
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* List */}
