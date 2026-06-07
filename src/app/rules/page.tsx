@@ -31,7 +31,7 @@ export default function RulesPage() {
           חוקי תחרות הסיבולת
         </p>
         <h1 className="mt-3 grunge-text text-4xl sm:text-6xl text-white">
-          הספר השחור של <span className="text-electric-400">Battles 3</span>
+          חוקי <span className="text-electric-400">סיבולת</span>
         </h1>
         <p className="mt-4 max-w-2xl mx-auto text-white/70 text-sm sm:text-base leading-7">
           כל מה שצריך לדעת לפני שמגישים מועמדות — מקצי הקבלה, חוקי שיפוט לכל תרגיל,
