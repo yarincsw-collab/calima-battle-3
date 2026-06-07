@@ -506,29 +506,41 @@ function StepVideos({
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <h3 className="grunge-text text-2xl text-electric-400">סיבולת</h3>
               <a
-                href="/rules#routine"
+                href="/rules#qualification"
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs text-electric-400 underline hover:text-electric-300 not-italic"
               >
-                המקצה המלא + חוקים
+                שיטת הניקוד המלאה + חוקים
               </a>
             </div>
             <p className="mt-2 text-sm text-white/65 leading-6">
-              צלם את עצמך מבצע את <span className="text-white font-bold">מקצה הקבלה המלא</span> (זכרים / נשים),
-              ללא עריכה. הצוות יפסול חזרות לא תקינות לפי חוקי השיפוט.
+              צלם את עצמך <span className="text-white font-bold">דקה אחת (60 שניות)</span> משיג כמה שיותר נקודות —
+              שילוב חופשי של תרגילים, ללא עריכה. הצוות יפסול חזרות לא תקינות לפי חוקי השיפוט.
             </p>
 
-            {/* Mini routine preview */}
+            {/* Points preview */}
             <div className="mt-4 rounded-lg overflow-hidden border border-white/10 bg-ink-800/40">
               <div className="px-3 py-2 text-electric-400 text-[11px] uppercase tracking-[0.3em] border-b border-white/5 not-italic">
-                טעימה ממקצה הזכרים
+                שיטת הניקוד
               </div>
-              <ul className="p-3 space-y-1 text-xs sm:text-sm text-white/85">
-                <li>50 מקבילים + 5 מתחים + 1 עליית כוח</li>
-                <li>40 שכיבות סמיכה + 10 מתחים + 2 עליות כוח</li>
-                <li>30 סקוואטים + 15 מתחים + 3 עליות כוח</li>
-                <li className="text-white/50">... ועוד 5 סטים. לחץ "המקצה המלא + חוקים" למעלה.</li>
+              <ul className="p-3 space-y-1.5 text-xs sm:text-sm text-white/85">
+                <li className="flex justify-between gap-2">
+                  <span>שכיבת סמיכה / סקוואט (כל וריאציה)</span>
+                  <span className="text-electric-400 font-bold not-italic">1 נק׳</span>
+                </li>
+                <li className="flex justify-between gap-2">
+                  <span>מקבילים / בר דיפס</span>
+                  <span className="text-electric-400 font-bold not-italic">2 נק׳</span>
+                </li>
+                <li className="flex justify-between gap-2">
+                  <span>מתח</span>
+                  <span className="text-electric-400 font-bold not-italic">3 נק׳</span>
+                </li>
+                <li className="flex justify-between gap-2">
+                  <span>עליית כוח</span>
+                  <span className="text-electric-400 font-bold not-italic">4 נק׳</span>
+                </li>
               </ul>
             </div>
 

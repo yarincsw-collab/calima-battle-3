@@ -4,8 +4,10 @@ import { Reveal } from "@/components/Reveal";
 import { ArrowLeftIcon, CheckIcon } from "@/components/icons";
 import {
   APPLICATION_STEPS,
-  ROUTINE_MALE,
-  ROUTINE_FEMALE,
+  QUALIFICATION_POINTS,
+  QUALIFICATION_RULES,
+  COMPETITION_STRUCTURE,
+  ALLOWED_EXERCISES,
   RECORDING_RULES,
   EXERCISES,
   FINAL_NOTES,
@@ -39,9 +41,10 @@ export default function RulesPage() {
         <nav className="mt-8 flex flex-wrap justify-center gap-3 text-xs sm:text-sm">
           {[
             { id: "process", label: "תהליך ההרשמה" },
-            { id: "routine", label: "מקצי קבלה" },
+            { id: "qualification", label: "שיטת ניקוד העפלה" },
+            { id: "structure", label: "מבנה התחרות" },
             { id: "recording", label: "הוראות צילום" },
-            { id: "exercises", label: "חוקי תרגילים" },
+            { id: "exercises", label: "תרגילים וחוקי שיפוט" },
           ].map((t) => (
             <a
               key={t.id}
@@ -81,28 +84,102 @@ export default function RulesPage() {
         </div>
       </section>
 
-      {/* ───── 2. ROUTINES */}
-      <section id="routine" className="px-5 py-12 sm:py-16 border-y border-white/5 bg-ink-900/40">
+      {/* ───── 2. ONLINE QUALIFICATION (60-SECOND POINTS) */}
+      <section id="qualification" className="px-5 py-12 sm:py-16 border-y border-white/5 bg-ink-900/40">
         <div className="mx-auto max-w-5xl">
-          <SectionHeading kicker="מקצי קבלה" title="הראה לנו את כל מה שיש לך" />
+          <SectionHeading kicker="שיטת ניקוד העפלה" title="דקה אחת. כמה שיותר נקודות." />
           <p className="mt-4 text-center text-white/60 text-sm max-w-2xl mx-auto">
-            הקבלה מבוססת על המהירות והניקיון בביצוע. מהירות לבדה לא תבטיח את המקום שלך —
-            כל חזרה חייבת להתבצע בטכניקה מושלמת. כל חזרה לא תקינה, ללא קשר למהירות,
-            תפסול את ההגשה.
+            יש לכם 60 שניות לצלם את עצמכם משיגים כמה שיותר נקודות. שלבו בין התרגילים בכל סדר
+            ובכל וריאציה — אתם בוחרים את האסטרטגיה. רק חזרות חוקיות נספרות.
           </p>
 
-          <div className="mt-10 grid md:grid-cols-2 gap-6">
-            <RoutineCard
-              title="מקצה זכרים"
-              subtitle="MALE ENDURANCE ROUTINE"
-              items={ROUTINE_MALE as unknown as string[]}
-            />
-            <RoutineCard
-              title="מקצה נשים"
-              subtitle="FEMALE ENDURANCE ROUTINE"
-              items={ROUTINE_FEMALE as unknown as string[]}
-            />
+          {/* points table */}
+          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {QUALIFICATION_POINTS.map((p) => (
+              <Reveal key={p.exercise}>
+                <div className="card p-5 h-full text-center hover:border-electric-500/50 transition">
+                  <div className="text-4xl mb-2 not-italic">{p.emoji}</div>
+                  <div className="grunge-text text-5xl text-electric-400 mb-1 not-italic">
+                    {p.points}
+                  </div>
+                  <div className="text-white/50 text-xs uppercase tracking-[0.2em] mb-2 not-italic">
+                    {p.points === 1 ? "נקודה" : "נקודות"}
+                  </div>
+                  <div className="text-white text-sm font-semibold leading-6">
+                    {p.exercise}
+                  </div>
+                </div>
+              </Reveal>
+            ))}
           </div>
+
+          {/* qualification rules */}
+          <Reveal>
+            <div className="mt-10 card p-6 sm:p-8">
+              <div className="text-electric-400 text-xs uppercase tracking-[0.4em] mb-4 not-italic">
+                חוקי שלב ההעפלה
+              </div>
+              <ul className="space-y-3">
+                {QUALIFICATION_RULES.map((rule, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-3 text-sm sm:text-base text-white/85 leading-7"
+                  >
+                    <CheckIcon className="w-4 h-4 mt-1.5 text-electric-400 shrink-0" />
+                    <span>{rule}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ───── 2b. COMPETITION STRUCTURE */}
+      <section id="structure" className="px-5 py-12 sm:py-16">
+        <div className="mx-auto max-w-5xl">
+          <SectionHeading kicker="מבנה התחרות" title="איך מתנהלת תחרות הסיבולת?" />
+          <p className="mt-4 text-center text-white/60 text-sm max-w-2xl mx-auto">
+            התחרות בנויה משני שלבים — Time Trial לדירוג, ואז באטלס בין 8 הטובים.
+          </p>
+
+          <div className="mt-10 grid sm:grid-cols-2 gap-5">
+            {COMPETITION_STRUCTURE.map((s, i) => (
+              <Reveal key={s.title}>
+                <div className="card p-6 h-full hover:border-electric-500/50 transition">
+                  <div className="grunge-text text-5xl text-electric-400 mb-2 not-italic">
+                    0{i + 1}
+                  </div>
+                  <h3 className="text-white font-bold text-lg mb-2">{s.title}</h3>
+                  <p className="text-white/70 text-sm leading-7">{s.body}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* allowed exercises */}
+          <Reveal>
+            <div className="mt-12 card p-6 sm:p-8 border-electric-500/30">
+              <div className="text-electric-400 text-xs uppercase tracking-[0.4em] mb-2 not-italic">
+                תרגילים שיכולים להופיע בסטים
+              </div>
+              <h3 className="grunge-text text-2xl sm:text-3xl text-white mb-6">
+                ארסנל התחרות
+              </h3>
+              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+                {ALLOWED_EXERCISES.map((ex) => (
+                  <div key={ex.name} className="border-b border-white/5 pb-3">
+                    <div className="text-white font-semibold text-sm sm:text-base mb-1">
+                      ▸ {ex.name}
+                    </div>
+                    <div className="text-white/60 text-xs sm:text-sm leading-6 ps-4">
+                      {ex.note}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -213,36 +290,3 @@ function SectionHeading({ kicker, title }: { kicker: string; title: string }) {
   );
 }
 
-function RoutineCard({
-  title,
-  subtitle,
-  items,
-}: {
-  title: string;
-  subtitle: string;
-  items: string[];
-}) {
-  return (
-    <Reveal>
-      <div className="card p-6 sm:p-8 h-full">
-        <div className="text-electric-400 text-xs uppercase tracking-[0.4em] mb-2 not-italic">
-          {subtitle}
-        </div>
-        <h3 className="grunge-text text-3xl sm:text-4xl text-white mb-6">{title}</h3>
-        <ol className="space-y-2.5">
-          {items.map((step, i) => (
-            <li
-              key={i}
-              className="flex items-start gap-3 text-sm sm:text-base text-white/90 leading-7"
-            >
-              <span className="grunge-text text-electric-400 text-xl shrink-0 w-7 text-center not-italic">
-                {i + 1}
-              </span>
-              <span>{step}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </Reveal>
-  );
-}
