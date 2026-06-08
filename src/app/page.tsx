@@ -3,6 +3,8 @@ import Image from "next/image";
 import { BattlesLogo } from "@/components/Logo";
 import { Reveal } from "@/components/Reveal";
 import { SlideIn } from "@/components/SlideIn";
+import { CountdownTimer } from "@/components/CountdownTimer";
+import { ShareCard } from "@/components/ShareCard";
 import {
   CalendarIcon,
   MapPinIcon,
@@ -31,6 +33,7 @@ export default function LandingPage() {
       <div className="absolute inset-x-0 top-1/3 h-40 diag-stripes opacity-30 pointer-events-none" aria-hidden />
 
       <Hero />
+      <CountdownTimer />
       <EventStrip />
       <DisciplinesSection />
       <ActionShot
@@ -43,6 +46,7 @@ export default function LandingPage() {
       <JudgingSection />
       <LevelsSection />
       <PricingSection />
+      <ShareCard />
       <RegisterCTA />
       <Footer />
     </main>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { A11yButton } from "@/components/A11yButton";
+import { BackgroundMusic } from "@/components/BackgroundMusic";
 
 export const metadata: Metadata = {
   title: "Calima Battles 3 — תחרות הקליסטניקס הגדולה של השנה",
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-ink-950 text-white">
         {children}
         <A11yButton />
+        <BackgroundMusic />
       </body>
     </html>
   );
