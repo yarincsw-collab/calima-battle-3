@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BattlesLogo } from "@/components/Logo";
 import { CheckIcon } from "@/components/icons";
 import { COMPETITION } from "@/lib/competition";
+import { RegistrationShare } from "@/components/RegistrationShare";
 
 export const metadata = {
   title: "הרשמה התקבלה — Calima Battles 3",
@@ -35,6 +36,8 @@ export default function SuccessPage({ searchParams }: { searchParams: { id?: str
           <div>📅 {COMPETITION.displayDates}</div>
           <div>📍 {COMPETITION.venue.address}</div>
         </div>
+
+        <RegistrationShare />
 
         <div className="mt-8 flex justify-center">
           <Link href="/" className="btn-ghost">
