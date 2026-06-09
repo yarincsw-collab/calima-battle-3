@@ -20,6 +20,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
 
 interface FormState {
   categories: CategoryId[];
+  isCalimaMember: boolean;
   fullName: string;
   dob: string;
   email: string;
@@ -38,6 +39,7 @@ interface FormState {
 
 const emptyState: FormState = {
   categories: [],
+  isCalimaMember: false,
   fullName: "",
   dob: "",
   email: "",
@@ -54,6 +56,19 @@ const emptyState: FormState = {
   liabilityAccepted: false,
 };
 
+/**
+ * Compute the price applying the Calima-member discount.
+ * Regular Calima members get free entry to the women's endurance category.
+ */
+function priceWithMemberDiscount(ids: CategoryId[], isMember: boolean): number {
+  return ids.reduce((sum, id) => {
+    const cat = categoryById(id);
+    if (!cat) return sum;
+    if (isMember && id === "endurance_women") return sum; // free for members
+    return sum + cat.price;
+  }, 0);
+}
+
 export function RegistrationForm() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
@@ -66,7 +81,10 @@ export function RegistrationForm() {
 
   const age = state.dob ? calcAge(state.dob) : null;
   const isMinor = age !== null && age < 18;
-  const price = useMemo(() => totalPrice(state.categories), [state.categories]);
+  const price = useMemo(
+    () => priceWithMemberDiscount(state.categories, state.isCalimaMember),
+    [state.categories, state.isCalimaMember]
+  );
 
   const hasFreestyle = state.categories.some(
     (id) => categoryById(id)?.day === "freestyle"
@@ -141,6 +159,7 @@ export function RegistrationForm() {
 
       const payload = {
         categories: state.categories,
+        isCalimaMember: state.isCalimaMember,
         fullName: state.fullName,
         dob: state.dob,
         email: state.email,
@@ -180,6 +199,8 @@ export function RegistrationForm() {
           <StepCategories
             selected={state.categories}
             onToggle={toggleCategory}
+            isCalimaMember={state.isCalimaMember}
+            onMemberToggle={(v) => update("isCalimaMember", v)}
           />
         )}
 
@@ -300,11 +321,16 @@ function Stepper({ step }: { step: Step }) {
 function StepCategories({
   selected,
   onToggle,
+  isCalimaMember,
+  onMemberToggle,
 }: {
   selected: CategoryId[];
   onToggle: (id: CategoryId) => void;
+  isCalimaMember: boolean;
+  onMemberToggle: (v: boolean) => void;
 }) {
-  const total = totalPrice(selected);
+  const total = priceWithMemberDiscount(selected, isCalimaMember);
+  const showMemberOption = selected.includes("endurance_women");
   return (
     <div>
       <StepTitle title="בחר מקצה" subtitle="אפשר להירשם גם לפריסטייל וגם לסיבולת. בחר את המקצים שלך:" />
@@ -330,6 +356,41 @@ function StepCategories({
         <CategoryGroup title="יום חמישי 30.7 · פריסטייל" cats={FREESTYLE_CATEGORIES} selected={selected} onToggle={onToggle} />
         <CategoryGroup title="יום שישי 31.7 · סיבולת" cats={ENDURANCE_CATEGORIES} selected={selected} onToggle={onToggle} />
       </div>
+
+      {showMemberOption && (
+        <button
+          type="button"
+          onClick={() => onMemberToggle(!isCalimaMember)}
+          role="switch"
+          aria-checked={isCalimaMember}
+          className={`mt-5 w-full flex items-center justify-between gap-3 p-4 rounded-xl border-2 transition text-start ${
+            isCalimaMember
+              ? "bg-electric-500/15 border-electric-500/70"
+              : "bg-ink-800 border-white/15 hover:border-white/30"
+          }`}
+        >
+          <div>
+            <div className="text-white font-bold text-sm sm:text-base">
+              אני מתאמנת קבוע במתחם קלימה
+            </div>
+            <div className="text-white/65 text-xs sm:text-sm mt-0.5 leading-6">
+              מתאמנות קבועות זכאיות להשתתפות <span className="text-electric-400 font-bold">חינם</span> במקצה סיבולת נשים
+            </div>
+          </div>
+          <span
+            className={`relative w-14 h-7 rounded-full transition flex-shrink-0 ${
+              isCalimaMember ? "bg-electric-500" : "bg-white/25"
+            }`}
+            aria-hidden
+          >
+            <span
+              className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition ${
+                isCalimaMember ? "end-0.5" : "start-0.5"
+              }`}
+            />
+          </span>
+        </button>
+      )}
 
       <div className="mt-6 flex items-center justify-between p-4 rounded-lg bg-electric-500/10 border border-electric-500/30">
         <span className="text-white/85">סה״כ להרשמה</span>

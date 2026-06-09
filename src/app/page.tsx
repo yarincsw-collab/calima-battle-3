@@ -5,6 +5,8 @@ import { Reveal } from "@/components/Reveal";
 import { SlideIn } from "@/components/SlideIn";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ShareCard } from "@/components/ShareCard";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { TrackedRegisterLink } from "@/components/TrackedRegisterLink";
 import {
   CalendarIcon,
   MapPinIcon,
@@ -32,6 +34,7 @@ export default function LandingPage() {
       {/* Decorative diagonal stripes */}
       <div className="absolute inset-x-0 top-1/3 h-40 diag-stripes opacity-30 pointer-events-none" aria-hidden />
 
+      <AnalyticsTracker event="page_view" />
       <Hero />
       <CountdownTimer />
       <EventStrip />
@@ -114,13 +117,13 @@ function Hero() {
 
         <Reveal delay={480}>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/register"
+            <TrackedRegisterLink
+              source="hero"
               className="btn-primary group hover:-translate-y-0.5 hover:shadow-glow-strong transition-all"
             >
               הרשמה לתחרות
               <ArrowLeftIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-            </Link>
+            </TrackedRegisterLink>
             <a href="#disciplines" className="btn-ghost hover:-translate-y-0.5 transition-all">
               פרטים נוספים
             </a>
@@ -415,13 +418,13 @@ function RegisterCTA() {
         </ul>
 
         <div className="mt-10">
-          <Link
-            href="/register"
+          <TrackedRegisterLink
+            source="footer_cta"
             className="btn-primary text-lg group hover:-translate-y-0.5 hover:shadow-glow-strong transition-all"
           >
             התחל הרשמה
             <ArrowLeftIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-          </Link>
+          </TrackedRegisterLink>
         </div>
         </div>
       </Reveal>
