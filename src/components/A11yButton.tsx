@@ -96,12 +96,22 @@ export function A11yButton() {
         </svg>
       </button>
 
+      {/* Backdrop — tap anywhere outside to close (mobile-friendly) */}
+      {open && (
+        <div
+          className="fixed inset-0 z-[9998] bg-ink-950/60 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+          aria-hidden
+        />
+      )}
+
       {/* Panel */}
       {open && (
         <div
           role="dialog"
           aria-label="הגדרות נגישות"
-          className="fixed bottom-20 start-4 z-[9999] w-[calc(100vw-2rem)] max-w-sm bg-ink-900 border border-electric-500/40 rounded-2xl shadow-glow-strong p-5 not-italic"
+          onClick={(e) => e.stopPropagation()}
+          className="fixed bottom-20 start-4 end-4 sm:end-auto z-[9999] mx-auto sm:mx-0 w-auto sm:w-[calc(100vw-2rem)] max-w-sm max-h-[calc(100vh-7rem)] overflow-y-auto bg-ink-900 border border-electric-500/40 rounded-2xl shadow-glow-strong p-5 not-italic"
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-bold text-lg">נגישות</h2>
@@ -109,7 +119,7 @@ export function A11yButton() {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="סגור"
-              className="text-white/60 hover:text-white text-2xl leading-none"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-ink-800 hover:bg-ink-700 text-white/70 hover:text-white text-2xl leading-none"
             >
               ×
             </button>
