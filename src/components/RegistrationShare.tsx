@@ -21,8 +21,15 @@ export function RegistrationShare() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
+  const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setLogo(img);
+    img.src = "/calima-logo.png";
+  }, []);
 
   useEffect(() => {
     if (typeof navigator !== "undefined" && "share" in navigator) {
@@ -32,11 +39,11 @@ export function RegistrationShare() {
 
   useEffect(() => {
     if (typeof document !== "undefined" && (document as any).fonts) {
-      (document as any).fonts.ready.then(() => drawStory(canvasRef.current, photo));
+      (document as any).fonts.ready.then(() => drawStory(canvasRef.current, photo, logo));
     } else {
-      drawStory(canvasRef.current, photo);
+      drawStory(canvasRef.current, photo, logo);
     }
-  }, [photo]);
+  }, [photo, logo]);
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -172,7 +179,11 @@ export function RegistrationShare() {
 
 /* ────────────────────────────────────────── canvas drawing */
 
-function drawStory(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | null) {
+function drawStory(
+  canvas: HTMLCanvasElement | null,
+  photo: HTMLImageElement | null,
+  logo: HTMLImageElement | null,
+) {
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -268,6 +279,17 @@ function drawStory(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | n
   // ─── electric divider
   ctx.fillStyle = "#1BA4E0";
   ctx.fillRect(W / 2 - 200, 1740, 400, 6);
+
+  // ─── Calima logo (top-left)
+  if (logo) {
+    const logoH = 110;
+    const ratio = logoH / logo.height;
+    const logoW = logo.width * ratio;
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(logo, 50, 50, logoW, logoH);
+    ctx.restore();
+  }
 
   // ─── URL
   ctx.fillStyle = "#1BA4E0";

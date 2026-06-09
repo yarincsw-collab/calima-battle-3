@@ -22,47 +22,59 @@ export function ShareCard() {
   return (
     <div className="px-5 pt-2 pb-1">
       <div className="mx-auto max-w-2xl">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="group relative w-full overflow-hidden rounded-2xl px-6 py-5 sm:py-6 transition-transform hover:scale-[1.02] active:scale-100 not-italic"
-          style={{
-            background:
-              "linear-gradient(120deg, #B8860B 0%, #FFD700 25%, #FFF3B0 50%, #FFD700 75%, #8B6914 100%)",
-            backgroundSize: "200% 200%",
-            animation: "goldShimmer 5s ease-in-out infinite",
-            boxShadow:
-              "0 10px 35px -8px rgba(255,215,0,0.55), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.15)",
-          }}
-        >
-          <div className="relative z-10 flex items-center justify-center gap-3 text-[#3a2900]">
-            <span className="text-2xl sm:text-3xl drop-shadow">✨</span>
-            <div className="flex flex-col items-center sm:items-baseline sm:flex-row gap-1 sm:gap-3">
-              <span
-                className="grunge-text text-3xl sm:text-4xl uppercase tracking-wide"
-                style={{ textShadow: "0 1px 0 rgba(255,255,255,0.4)" }}
-              >
-                נסה אותי
-              </span>
-              <span className="text-xs sm:text-sm font-bold opacity-90 tracking-wider">
-                ✦ צור סטורי משלך לאירוע ✦
-              </span>
-            </div>
-            <span className="text-2xl sm:text-3xl drop-shadow">🎯</span>
-          </div>
-
-          {/* shine sweep */}
-          <span
-            className="pointer-events-none absolute inset-0 -skew-x-12 opacity-60 group-hover:opacity-90 transition-opacity"
+        {/* outer warm-gold halo that fades into the dark background */}
+        <div className="relative">
+          <div
+            aria-hidden
+            className="absolute -inset-3 rounded-3xl blur-2xl opacity-60 pointer-events-none"
             style={{
               background:
-                "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.7) 50%, transparent 70%)",
-              backgroundSize: "200% 100%",
-              animation: "shineSweep 3s linear infinite",
+                "radial-gradient(ellipse at center, rgba(212,165,77,0.45) 0%, rgba(212,165,77,0) 70%)",
             }}
-            aria-hidden
           />
-        </button>
+
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="group relative w-full overflow-hidden rounded-2xl px-6 py-5 sm:py-6 transition-transform hover:scale-[1.02] active:scale-100 not-italic"
+            style={{
+              background:
+                "linear-gradient(135deg, #8a5e1f 0%, #d4a54d 22%, #f0d585 45%, #faecb6 50%, #f0d585 55%, #d4a54d 78%, #6e4814 100%)",
+              backgroundSize: "200% 200%",
+              animation: "goldShimmer 6s ease-in-out infinite",
+              boxShadow:
+                "0 14px 40px -12px rgba(212,165,77,0.65), 0 0 0 1px rgba(212,165,77,0.55), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 0 rgba(0,0,0,0.25)",
+            }}
+          >
+            <div className="relative z-10 flex items-center justify-center gap-3 text-[#3a2900]">
+              <span className="text-2xl sm:text-3xl drop-shadow">✨</span>
+              <div className="flex flex-col items-center sm:items-baseline sm:flex-row gap-1 sm:gap-3">
+                <span
+                  className="grunge-text text-3xl sm:text-4xl uppercase tracking-wide"
+                  style={{ textShadow: "0 1px 0 rgba(255,245,200,0.6)" }}
+                >
+                  נסה אותי
+                </span>
+                <span className="text-xs sm:text-sm font-bold opacity-90 tracking-wider">
+                  ✦ צור סטורי משלך לאירוע ✦
+                </span>
+              </div>
+              <span className="text-2xl sm:text-3xl drop-shadow">🎯</span>
+            </div>
+
+            {/* shine sweep */}
+            <span
+              className="pointer-events-none absolute inset-0 -skew-x-12 opacity-60 group-hover:opacity-90 transition-opacity"
+              style={{
+                background:
+                  "linear-gradient(110deg, transparent 30%, rgba(255,250,220,0.75) 50%, transparent 70%)",
+                backgroundSize: "200% 100%",
+                animation: "shineSweep 3.5s linear infinite",
+              }}
+              aria-hidden
+            />
+          </button>
+        </div>
 
         <style jsx>{`
           @keyframes goldShimmer {
@@ -88,8 +100,16 @@ function ShareModal({ onClose }: { onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
+  const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [canShare, setCanShare] = useState(false);
+
+  // load Calima logo once
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setLogo(img);
+    img.src = "/calima-logo.png";
+  }, []);
 
   useEffect(() => {
     if (typeof navigator !== "undefined" && "share" in navigator) {
@@ -104,11 +124,11 @@ function ShareModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     // wait for fonts to be ready so canvas uses Open Sans
     if (typeof document !== "undefined" && (document as any).fonts) {
-      (document as any).fonts.ready.then(() => drawCard(canvasRef.current, photo));
+      (document as any).fonts.ready.then(() => drawCard(canvasRef.current, photo, logo));
     } else {
-      drawCard(canvasRef.current, photo);
+      drawCard(canvasRef.current, photo, logo);
     }
-  }, [photo]);
+  }, [photo, logo]);
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -275,7 +295,11 @@ function ShareModal({ onClose }: { onClose: () => void }) {
 
 /* ────────────────────────────────────────── canvas drawing (1080×1920) */
 
-function drawCard(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | null) {
+function drawCard(
+  canvas: HTMLCanvasElement | null,
+  photo: HTMLImageElement | null,
+  logo: HTMLImageElement | null,
+) {
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -374,14 +398,30 @@ function drawCard(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | nu
   ctx.font = `700 48px ${FONT_STACK}`;
   ctx.fillText("30-31.7  •  ראשון לציון", W / 2, badgeY + 62);
 
+  // ─── Calima logo (top-right corner)
+  if (logo) {
+    const logoH = 110;
+    const ratio = logoH / logo.height;
+    const logoW = logo.width * ratio;
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(logo, 50, 50, logoW, logoH);
+    ctx.restore();
+  }
+
+  // ─── "presented by" line above URL
+  ctx.fillStyle = "rgba(255,255,255,0.4)";
+  ctx.font = `400 26px ${FONT_STACK}`;
+  ctx.fillText("Calima · מתחם קליסטניקס", W / 2, H - 120);
+
   // ─── URL — bottom
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.font = `600 36px ${FONT_STACK}`;
-  ctx.fillText("battles3.calima.co.il", W / 2, H - 80);
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.font = `600 38px ${FONT_STACK}`;
+  ctx.fillText("battles3.calima.co.il", W / 2, H - 70);
 
   // ─── subtle bottom electric accent line
   ctx.fillStyle = "rgba(27,164,224,0.6)";
-  ctx.fillRect(W / 2 - 80, H - 50, 160, 4);
+  ctx.fillRect(W / 2 - 80, H - 40, 160, 4);
 }
 
 function roundedRect(
