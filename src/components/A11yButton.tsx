@@ -205,18 +205,23 @@ function Toggle({
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className="w-full flex items-center justify-between gap-3 p-3 rounded-lg bg-ink-800 border border-white/10 hover:bg-ink-700 transition text-start"
+      className={`w-full flex items-center justify-between gap-3 p-3 rounded-lg border-2 transition text-start ${
+        checked
+          ? "bg-electric-500/15 border-electric-500/70 hover:bg-electric-500/20"
+          : "bg-ink-800 border-white/15 hover:bg-ink-700"
+      }`}
       role="switch"
       aria-checked={checked}
     >
-      <span className="text-white text-sm">{label}</span>
+      <span className="text-white text-sm font-semibold">{label}</span>
       <span
-        className={`relative w-10 h-5 rounded-full transition ${
-          checked ? "bg-electric-500" : "bg-white/15"
+        className={`relative w-14 h-7 rounded-full transition flex-shrink-0 ${
+          checked ? "bg-electric-500" : "bg-white/25"
         }`}
+        aria-hidden
       >
         <span
-          className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition ${
+          className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition ${
             checked ? "end-0.5" : "start-0.5"
           }`}
         />
