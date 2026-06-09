@@ -36,7 +36,7 @@ export function ShareCard() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="group relative w-full overflow-hidden rounded-2xl px-6 py-5 sm:py-6 transition-transform hover:scale-[1.02] active:scale-100 not-italic"
+            className="group relative w-full overflow-hidden rounded-2xl px-4 py-4 sm:px-6 sm:py-5 transition-transform hover:scale-[1.02] active:scale-100 not-italic"
             style={{
               background:
                 "linear-gradient(135deg, #8a5e1f 0%, #d4a54d 22%, #f0d585 45%, #faecb6 50%, #f0d585 55%, #d4a54d 78%, #6e4814 100%)",
@@ -46,20 +46,20 @@ export function ShareCard() {
                 "0 14px 40px -12px rgba(212,165,77,0.65), 0 0 0 1px rgba(212,165,77,0.55), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 0 rgba(0,0,0,0.25)",
             }}
           >
-            <div className="relative z-10 flex items-center justify-center gap-3 text-[#3a2900]">
-              <span className="text-2xl sm:text-3xl drop-shadow">✨</span>
-              <div className="flex flex-col items-center sm:items-baseline sm:flex-row gap-1 sm:gap-3">
+            <div className="relative z-10 flex flex-col items-center text-[#3a2900]">
+              <div className="flex items-center justify-center gap-2 sm:gap-3 w-full">
+                <span className="text-xl sm:text-3xl drop-shadow">✨</span>
                 <span
-                  className="grunge-text text-3xl sm:text-4xl uppercase tracking-wide"
+                  className="grunge-text text-2xl sm:text-4xl uppercase tracking-wide leading-none"
                   style={{ textShadow: "0 1px 0 rgba(255,245,200,0.6)" }}
                 >
                   נסה אותי
                 </span>
-                <span className="text-xs sm:text-sm font-bold opacity-90 tracking-wider">
-                  ✦ צור סטורי משלך לאירוע ✦
-                </span>
+                <span className="text-xl sm:text-3xl drop-shadow">🎯</span>
               </div>
-              <span className="text-2xl sm:text-3xl drop-shadow">🎯</span>
+              <span className="mt-1 sm:mt-1.5 text-[10px] sm:text-sm font-bold opacity-90 tracking-wider whitespace-nowrap">
+                ✦ צור סטורי משלך לאירוע ✦
+              </span>
             </div>
 
             {/* shine sweep */}
