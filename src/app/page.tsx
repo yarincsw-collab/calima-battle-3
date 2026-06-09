@@ -33,6 +33,7 @@ export default function LandingPage() {
       <div className="absolute inset-x-0 top-1/3 h-40 diag-stripes opacity-30 pointer-events-none" aria-hidden />
 
       <Hero />
+      <ShareCard />
       <CountdownTimer />
       <EventStrip />
       <DisciplinesSection />
@@ -46,7 +47,6 @@ export default function LandingPage() {
       <JudgingSection />
       <LevelsSection />
       <PricingSection />
-      <ShareCard />
       <RegisterCTA />
       <Footer />
     </main>

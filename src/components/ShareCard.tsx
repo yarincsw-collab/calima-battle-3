@@ -3,18 +3,80 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Viral share card.
- *  • User uploads a personal photo.
- *  • We compose it on a 1080x1350 (Instagram portrait) canvas
- *    with the Battles 3 branding, dates and a CTA.
- *  • User can download the PNG or share via native Web Share API
- *    (WhatsApp / Instagram / etc.).
+ * Viral share — appears as a vibrant "נסה אותי" button at the top of
+ * the landing page. When clicked, opens a full-screen modal where the
+ * user can upload a photo and generate a branded "אני מגיע לאירוע"
+ * card to share to social media.
  */
 
 const W = 1080;
 const H = 1350;
+const SITE_URL = "https://battles3.calima.co.il";
+const SHARE_TEXT = 'אני מגיע ל-Calima Battles 3 🔥 30-31.7 ראשל"צ — נתראה בבמה.';
 
 export function ShareCard() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="px-5 pt-2 pb-1">
+      <div className="mx-auto max-w-2xl">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="group relative w-full overflow-hidden rounded-2xl px-6 py-5 sm:py-6 shadow-glow-strong transition-transform hover:scale-[1.02] active:scale-100 not-italic"
+          style={{
+            background:
+              "linear-gradient(120deg, #1BA4E0 0%, #6BD4FF 35%, #1BA4E0 55%, #0A78A8 100%)",
+            backgroundSize: "200% 200%",
+            animation: "shimmer 4s linear infinite",
+          }}
+        >
+          <div className="relative z-10 flex items-center justify-center gap-3 text-ink-950">
+            <span className="text-2xl sm:text-3xl">✨</span>
+            <div className="flex flex-col items-center sm:items-baseline sm:flex-row gap-1 sm:gap-3">
+              <span className="grunge-text text-3xl sm:text-4xl uppercase">
+                נסה אותי
+              </span>
+              <span className="text-xs sm:text-sm font-bold opacity-80 tracking-wider">
+                ✦ צור סטורי משלך לאירוע ✦
+              </span>
+            </div>
+            <span className="text-2xl sm:text-3xl">🎯</span>
+          </div>
+
+          {/* shine sweep */}
+          <span
+            className="pointer-events-none absolute inset-0 -skew-x-12 opacity-50 group-hover:opacity-80 transition-opacity"
+            style={{
+              background:
+                "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%)",
+              backgroundSize: "200% 100%",
+              animation: "shineSweep 3s linear infinite",
+            }}
+            aria-hidden
+          />
+        </button>
+
+        <style jsx>{`
+          @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+          }
+          @keyframes shineSweep {
+            0% { background-position: -100% 0; }
+            100% { background-position: 200% 0; }
+          }
+        `}</style>
+      </div>
+
+      {open && <ShareModal onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────── modal */
+
+function ShareModal({ onClose }: { onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
@@ -25,9 +87,13 @@ export function ShareCard() {
     if (typeof navigator !== "undefined" && "share" in navigator) {
       setCanShare(true);
     }
+    // lock scroll while modal open
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, []);
 
-  // Draw whenever photo changes
   useEffect(() => {
     drawCard(canvasRef.current, photo);
   }, [photo]);
@@ -47,7 +113,7 @@ export function ShareCard() {
   async function getBlob(): Promise<Blob | null> {
     const c = canvasRef.current;
     if (!c) return null;
-    return new Promise((resolve) => c.toBlob((b) => resolve(b), "image/png", 0.95));
+    return new Promise((r) => c.toBlob((b) => r(b), "image/png", 0.95));
   }
 
   async function download() {
@@ -65,25 +131,24 @@ export function ShareCard() {
     }
   }
 
-  async function share() {
+  function shareWhatsapp() {
+    const url = `https://wa.me/?text=${encodeURIComponent(`${SHARE_TEXT}\n${SITE_URL}`)}`;
+    window.open(url, "_blank");
+  }
+
+  async function shareNative() {
     setBusy(true);
     try {
       const blob = await getBlob();
-      if (!blob) return;
-      const file = new File([blob], "calima-battles-3.png", { type: "image/png" });
-      const data: ShareData = {
-        title: "Calima Battles 3",
-        text: "אני מתחרה ב-Calima Battles 3 — תחרות הקליסטניקס הגדולה של השנה! https://battles3.calima.co.il",
-        files: [file],
-      };
-      // Try files first, fallback to text-only
+      const file = blob ? new File([blob], "calima-battles-3.png", { type: "image/png" }) : null;
       try {
-        await navigator.share(data);
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: "Calima Battles 3", text: SHARE_TEXT, files: [file] });
+        } else {
+          await navigator.share({ title: "Calima Battles 3", text: `${SHARE_TEXT}\n${SITE_URL}` });
+        }
       } catch {
-        await navigator.share({
-          title: data.title,
-          text: data.text,
-        });
+        /* cancelled */
       }
     } finally {
       setBusy(false);
@@ -91,23 +156,38 @@ export function ShareCard() {
   }
 
   return (
-    <section className="px-5 py-16 sm:py-20">
-      <div className="mx-auto max-w-5xl">
-        <div className="text-center">
-          <div className="text-electric-400 text-xs sm:text-sm uppercase tracking-[0.5em] mb-3 not-italic">
-            תכריזו שאתם בפנים
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center px-3 py-6 sm:p-6 bg-ink-950/85 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-4xl max-h-full overflow-y-auto card p-5 sm:p-7 border-electric-500/50 shadow-glow-strong"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* close */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="סגור"
+          className="absolute top-3 end-3 w-9 h-9 rounded-full bg-ink-800 border border-white/15 text-white/80 hover:text-white hover:bg-ink-700 transition flex items-center justify-center text-xl leading-none not-italic"
+        >
+          ×
+        </button>
+
+        <div className="text-center mb-5">
+          <div className="text-electric-400 text-xs uppercase tracking-[0.5em] mb-2 not-italic">
+            תכריזו על ההגעה שלכם
           </div>
-          <h2 className="grunge-text text-3xl sm:text-5xl text-white">
-            שתפו את ההשתתפות שלכם
+          <h2 className="grunge-text text-3xl sm:text-4xl text-white">
+            אני מגיע לאירוע 🔥
           </h2>
-          <p className="mt-4 max-w-xl mx-auto text-white/65 text-sm sm:text-base leading-7">
-            העלו תמונה שלכם, צרו כרזה אישית של Battles 3 ושתפו באינסטה/וואטסאפ.
-            תאמינו לכם ולחברים שלכם.
+          <p className="mt-2 text-white/60 text-xs sm:text-sm leading-6">
+            העלו תמונה שלכם → הורידו את הכרזה → שתפו באינסטה/וואטסאפ.
           </p>
         </div>
 
-        <div className="mt-10 grid md:grid-cols-2 gap-8 items-start">
-          {/* Canvas preview */}
+        <div className="grid md:grid-cols-[1fr,1.1fr] gap-5 items-start">
+          {/* canvas */}
           <div className="card p-3 sm:p-4">
             <div className="relative w-full aspect-[4/5] rounded-lg overflow-hidden bg-ink-900 border border-white/10">
               <canvas
@@ -124,8 +204,8 @@ export function ShareCard() {
             </div>
           </div>
 
-          {/* Controls */}
-          <div className="space-y-4">
+          {/* controls */}
+          <div className="space-y-3">
             <input
               ref={fileInputRef}
               type="file"
@@ -139,38 +219,46 @@ export function ShareCard() {
               onClick={() => fileInputRef.current?.click()}
               className="w-full py-4 rounded-xl bg-electric-500 text-ink-950 font-bold text-base sm:text-lg hover:bg-electric-400 transition not-italic shadow-glow"
             >
-              {photo ? "בחר תמונה אחרת" : "העלה תמונה שלך"}
+              📷 {photo ? "החלף תמונה" : "העלה תמונה שלך"}
             </button>
 
             <button
               type="button"
-              disabled={!photo || busy}
+              disabled={busy}
               onClick={download}
-              className="w-full py-4 rounded-xl bg-ink-800 border border-white/15 text-white font-bold hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed not-italic"
+              className="w-full py-4 rounded-xl bg-ink-800 border border-white/15 text-white font-bold hover:bg-ink-700 transition disabled:opacity-40 not-italic"
             >
               📥 הורד תמונה
+            </button>
+
+            <button
+              type="button"
+              onClick={shareWhatsapp}
+              className="w-full py-4 rounded-xl bg-[#25D366] text-white font-bold hover:bg-[#1eb053] transition not-italic"
+            >
+              💬 שתף בוואטסאפ
             </button>
 
             {canShare && (
               <button
                 type="button"
-                disabled={!photo || busy}
-                onClick={share}
-                className="w-full py-4 rounded-xl bg-ink-800 border border-electric-500/40 text-electric-400 font-bold hover:bg-ink-700 transition disabled:opacity-40 disabled:cursor-not-allowed not-italic"
+                disabled={busy}
+                onClick={shareNative}
+                className="w-full py-4 rounded-xl bg-ink-800 border border-electric-500/40 text-electric-400 font-bold hover:bg-ink-700 transition disabled:opacity-40 not-italic"
               >
-                📲 שתף
+                📲 שתף לאינסטה / עוד
               </button>
             )}
 
-            <div className="text-xs text-white/40 leading-6 pt-2">
-              💡 התמונה נוצרת על המכשיר שלך בלבד ולא נשלחת לשרת.
+            <p className="text-[11px] text-white/40 leading-5 pt-2 text-center sm:text-start">
+              💡 לאינסטה: הורד תמונה → פתח אינסטה → סטורי חדש → בחר מהגלריה.
               <br />
-              באינסטה — תוכלו להעלות ל-Story ולתייג את <span className="text-electric-400">@calima.calisthenics</span>
-            </div>
+              תייגו <span className="text-electric-400">@calima.calisthenics</span>
+            </p>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -181,14 +269,26 @@ function drawCard(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | nu
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  // background
-  ctx.fillStyle = "#05070A";
+  // ─── background gradient
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#0A1018");
+  bg.addColorStop(1, "#05070A");
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  // photo area (top 75%)
-  const photoH = Math.floor(H * 0.72);
+  // ─── diagonal electric stripes (subtle)
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(-Math.PI / 6);
+  ctx.fillStyle = "rgba(27,164,224,0.06)";
+  for (let i = -2000; i < 2000; i += 90) {
+    ctx.fillRect(i, -2000, 50, 4000);
+  }
+  ctx.restore();
+
+  // ─── photo area (top 70%)
+  const photoH = Math.floor(H * 0.68);
   if (photo) {
-    // cover-fit
     const ratio = Math.max(W / photo.width, photoH / photo.height);
     const drawW = photo.width * ratio;
     const drawH = photo.height * ratio;
@@ -196,48 +296,85 @@ function drawCard(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | nu
     const dy = (photoH - drawH) / 2;
     ctx.drawImage(photo, dx, dy, drawW, drawH);
 
-    // dark overlay for contrast at bottom of photo
-    const grad = ctx.createLinearGradient(0, photoH * 0.5, 0, photoH);
-    grad.addColorStop(0, "rgba(5,7,10,0)");
-    grad.addColorStop(1, "rgba(5,7,10,0.95)");
-    ctx.fillStyle = grad;
+    // duotone overlay (electric blue → ink)
+    const overlay = ctx.createLinearGradient(0, 0, 0, photoH);
+    overlay.addColorStop(0, "rgba(27,164,224,0.18)");
+    overlay.addColorStop(0.6, "rgba(5,7,10,0)");
+    overlay.addColorStop(1, "rgba(5,7,10,0.96)");
+    ctx.fillStyle = overlay;
     ctx.fillRect(0, 0, W, photoH);
   } else {
-    // empty placeholder gradient
     const g = ctx.createLinearGradient(0, 0, 0, photoH);
-    g.addColorStop(0, "#0A1018");
+    g.addColorStop(0, "#0F1622");
     g.addColorStop(1, "#05070A");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, photoH);
   }
 
-  // bottom dark band
+  // ─── electric divider
+  ctx.fillStyle = "#1BA4E0";
+  ctx.shadowColor = "rgba(27,164,224,0.8)";
+  ctx.shadowBlur = 25;
+  ctx.fillRect(0, photoH - 5, W, 5);
+  ctx.shadowBlur = 0;
+
+  // ─── bottom panel
   ctx.fillStyle = "#05070A";
   ctx.fillRect(0, photoH, W, H - photoH);
 
-  // electric blue divider line
-  ctx.fillStyle = "#1BA4E0";
-  ctx.fillRect(0, photoH - 4, W, 4);
+  // ─── kicker badge "30-31.7 | ראשל"צ"
+  ctx.fillStyle = "rgba(27,164,224,0.15)";
+  ctx.strokeStyle = "#1BA4E0";
+  ctx.lineWidth = 2;
+  const badgeY = photoH + 50;
+  roundedRect(ctx, W / 2 - 320, badgeY, 640, 70, 35);
+  ctx.fill();
+  ctx.stroke();
 
-  // "I'M COMPETING" kicker (RTL Hebrew)
-  ctx.fillStyle = "#1BA4E0";
-  ctx.font = "bold 36px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText("אני מתחרה ב-", W / 2, photoH + 80);
-
-  // CALIMA BATTLES 3 wordmark
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "900 96px sans-serif";
-  ctx.fillText("CALIMA BATTLES 3", W / 2, photoH + 180);
-
-  // Dates
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 48px sans-serif";
-  ctx.fillText("30-31.7  |  ראשון לציון", W / 2, photoH + 260);
-
-  // URL
   ctx.fillStyle = "#1BA4E0";
   ctx.font = "bold 38px sans-serif";
-  ctx.fillText("battles3.calima.co.il", W / 2, photoH + 330);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("30-31.7  •  ראשון לציון", W / 2, badgeY + 47);
+
+  // ─── tagline "אני מגיע לאירוע"
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "bold 70px sans-serif";
+  ctx.fillText("אני מגיע לאירוע", W / 2, photoH + 200);
+
+  // ─── CALIMA wordmark
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "900 90px sans-serif";
+  ctx.fillText("CALIMA", W / 2, photoH + 285);
+
+  // ─── BATTLES 3 (electric, glowing)
+  ctx.save();
+  ctx.shadowColor = "rgba(27,164,224,0.85)";
+  ctx.shadowBlur = 35;
+  ctx.fillStyle = "#1BA4E0";
+  ctx.font = "900 120px sans-serif";
+  ctx.fillText("BATTLES 3", W / 2, photoH + 380);
+  ctx.restore();
+
+  // ─── URL footer
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.font = "bold 32px sans-serif";
+  ctx.fillText("battles3.calima.co.il", W / 2, H - 35);
+}
+
+function roundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
