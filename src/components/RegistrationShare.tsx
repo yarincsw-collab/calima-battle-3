@@ -14,6 +14,8 @@ const W = 1080;
 const H = 1920;
 const SITE_URL = "https://battles3.calima.co.il";
 const SHARE_TEXT = "גם אני נרשמתי לתחרות Calima Battles 3 🔥 30-31.7 ראשל\"צ — נתראה בבמה.";
+const FONT_STACK =
+  '"Open Sans","Open Sans Hebrew","Segoe UI",system-ui,sans-serif';
 
 export function RegistrationShare() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -29,7 +31,11 @@ export function RegistrationShare() {
   }, []);
 
   useEffect(() => {
-    drawStory(canvasRef.current, photo);
+    if (typeof document !== "undefined" && (document as any).fonts) {
+      (document as any).fonts.ready.then(() => drawStory(canvasRef.current, photo));
+    } else {
+      drawStory(canvasRef.current, photo);
+    }
   }, [photo]);
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -222,14 +228,14 @@ function drawStory(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | n
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.font = "bold 38px sans-serif";
+    ctx.font = `600 30px ${FONT_STACK}`;
     ctx.textAlign = "center";
     ctx.fillText("התמונה שלך כאן", W / 2, photoY + photoSize / 2 + 12);
   }
 
   // ─── top kicker
   ctx.fillStyle = "#1BA4E0";
-  ctx.font = "bold 50px sans-serif";
+  ctx.font = `700 italic 50px ${FONT_STACK}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
   ctx.letterSpacing = "8px";
@@ -237,12 +243,12 @@ function drawStory(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | n
 
   // ─── "גם אני נרשמתי לתחרות" (Hebrew tagline)
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 60px sans-serif";
+  ctx.font = `700 italic 60px ${FONT_STACK}`;
   ctx.fillText("גם אני נרשמתי לתחרות", W / 2, 1260);
 
   // ─── CALIMA BATTLES 3 wordmark — huge
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "900 130px sans-serif";
+  ctx.font = `800 italic 130px ${FONT_STACK}`;
   ctx.fillText("CALIMA", W / 2, 1410);
 
   // 3D-ish electric BATTLES with shadow
@@ -250,13 +256,13 @@ function drawStory(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | n
   ctx.shadowColor = "rgba(27,164,224,0.7)";
   ctx.shadowBlur = 30;
   ctx.fillStyle = "#1BA4E0";
-  ctx.font = "900 170px sans-serif";
+  ctx.font = `800 italic 170px ${FONT_STACK}`;
   ctx.fillText("BATTLES 3", W / 2, 1570);
   ctx.restore();
 
   // ─── dates & venue
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 56px sans-serif";
+  ctx.font = `700 48px ${FONT_STACK}`;
   ctx.fillText("30-31.7  |  ראשון לציון", W / 2, 1700);
 
   // ─── electric divider
@@ -265,6 +271,6 @@ function drawStory(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | n
 
   // ─── URL
   ctx.fillStyle = "#1BA4E0";
-  ctx.font = "bold 46px sans-serif";
+  ctx.font = `600 36px ${FONT_STACK}`;
   ctx.fillText("battles3.calima.co.il", W / 2, 1820);
 }

@@ -3,16 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Viral share — appears as a vibrant "נסה אותי" button at the top of
- * the landing page. When clicked, opens a full-screen modal where the
- * user can upload a photo and generate a branded "אני מגיע לאירוע"
- * card to share to social media.
+ * Viral share — a gold "נסה אותי" CTA at the top of the landing page.
+ * Click opens a modal where the user uploads a photo and gets an
+ * Instagram-Story-ready 1080×1920 card ("אני מגיע לאירוע") to share.
  */
 
 const W = 1080;
-const H = 1350;
+const H = 1920;
 const SITE_URL = "https://battles3.calima.co.il";
 const SHARE_TEXT = 'אני מגיע ל-Calima Battles 3 🔥 30-31.7 ראשל"צ — נתראה בבמה.';
+
+const FONT_STACK =
+  '"Open Sans","Open Sans Hebrew","Segoe UI",system-ui,sans-serif';
 
 export function ShareCard() {
   const [open, setOpen] = useState(false);
@@ -23,33 +25,38 @@ export function ShareCard() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="group relative w-full overflow-hidden rounded-2xl px-6 py-5 sm:py-6 shadow-glow-strong transition-transform hover:scale-[1.02] active:scale-100 not-italic"
+          className="group relative w-full overflow-hidden rounded-2xl px-6 py-5 sm:py-6 transition-transform hover:scale-[1.02] active:scale-100 not-italic"
           style={{
             background:
-              "linear-gradient(120deg, #1BA4E0 0%, #6BD4FF 35%, #1BA4E0 55%, #0A78A8 100%)",
+              "linear-gradient(120deg, #B8860B 0%, #FFD700 25%, #FFF3B0 50%, #FFD700 75%, #8B6914 100%)",
             backgroundSize: "200% 200%",
-            animation: "shimmer 4s linear infinite",
+            animation: "goldShimmer 5s ease-in-out infinite",
+            boxShadow:
+              "0 10px 35px -8px rgba(255,215,0,0.55), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.15)",
           }}
         >
-          <div className="relative z-10 flex items-center justify-center gap-3 text-ink-950">
-            <span className="text-2xl sm:text-3xl">✨</span>
+          <div className="relative z-10 flex items-center justify-center gap-3 text-[#3a2900]">
+            <span className="text-2xl sm:text-3xl drop-shadow">✨</span>
             <div className="flex flex-col items-center sm:items-baseline sm:flex-row gap-1 sm:gap-3">
-              <span className="grunge-text text-3xl sm:text-4xl uppercase">
+              <span
+                className="grunge-text text-3xl sm:text-4xl uppercase tracking-wide"
+                style={{ textShadow: "0 1px 0 rgba(255,255,255,0.4)" }}
+              >
                 נסה אותי
               </span>
-              <span className="text-xs sm:text-sm font-bold opacity-80 tracking-wider">
+              <span className="text-xs sm:text-sm font-bold opacity-90 tracking-wider">
                 ✦ צור סטורי משלך לאירוע ✦
               </span>
             </div>
-            <span className="text-2xl sm:text-3xl">🎯</span>
+            <span className="text-2xl sm:text-3xl drop-shadow">🎯</span>
           </div>
 
           {/* shine sweep */}
           <span
-            className="pointer-events-none absolute inset-0 -skew-x-12 opacity-50 group-hover:opacity-80 transition-opacity"
+            className="pointer-events-none absolute inset-0 -skew-x-12 opacity-60 group-hover:opacity-90 transition-opacity"
             style={{
               background:
-                "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%)",
+                "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.7) 50%, transparent 70%)",
               backgroundSize: "200% 100%",
               animation: "shineSweep 3s linear infinite",
             }}
@@ -58,9 +65,10 @@ export function ShareCard() {
         </button>
 
         <style jsx>{`
-          @keyframes shimmer {
+          @keyframes goldShimmer {
             0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
           }
           @keyframes shineSweep {
             0% { background-position: -100% 0; }
@@ -87,7 +95,6 @@ function ShareModal({ onClose }: { onClose: () => void }) {
     if (typeof navigator !== "undefined" && "share" in navigator) {
       setCanShare(true);
     }
-    // lock scroll while modal open
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
@@ -95,7 +102,12 @@ function ShareModal({ onClose }: { onClose: () => void }) {
   }, []);
 
   useEffect(() => {
-    drawCard(canvasRef.current, photo);
+    // wait for fonts to be ready so canvas uses Open Sans
+    if (typeof document !== "undefined" && (document as any).fonts) {
+      (document as any).fonts.ready.then(() => drawCard(canvasRef.current, photo));
+    } else {
+      drawCard(canvasRef.current, photo);
+    }
   }, [photo]);
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -123,7 +135,7 @@ function ShareModal({ onClose }: { onClose: () => void }) {
       if (!blob) return;
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "calima-battles-3.png";
+      a.download = "calima-battles-3-story.png";
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     } finally {
@@ -140,7 +152,7 @@ function ShareModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     try {
       const blob = await getBlob();
-      const file = blob ? new File([blob], "calima-battles-3.png", { type: "image/png" }) : null;
+      const file = blob ? new File([blob], "calima-battles-3-story.png", { type: "image/png" }) : null;
       try {
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ title: "Calima Battles 3", text: SHARE_TEXT, files: [file] });
@@ -164,7 +176,6 @@ function ShareModal({ onClose }: { onClose: () => void }) {
         className="relative w-full max-w-4xl max-h-full overflow-y-auto card p-5 sm:p-7 border-electric-500/50 shadow-glow-strong"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* close */}
         <button
           type="button"
           onClick={onClose}
@@ -182,14 +193,14 @@ function ShareModal({ onClose }: { onClose: () => void }) {
             אני מגיע לאירוע 🔥
           </h2>
           <p className="mt-2 text-white/60 text-xs sm:text-sm leading-6">
-            העלו תמונה שלכם → הורידו את הכרזה → שתפו באינסטה/וואטסאפ.
+            פורמט סטורי לאינסטה • 1080×1920
           </p>
         </div>
 
-        <div className="grid md:grid-cols-[1fr,1.1fr] gap-5 items-start">
-          {/* canvas */}
+        <div className="grid md:grid-cols-[1fr,1.2fr] gap-5 items-start">
+          {/* canvas — story aspect ratio */}
           <div className="card p-3 sm:p-4">
-            <div className="relative w-full aspect-[4/5] rounded-lg overflow-hidden bg-ink-900 border border-white/10">
+            <div className="relative mx-auto w-full max-w-[280px] aspect-[9/16] rounded-lg overflow-hidden bg-ink-900 border border-white/10">
               <canvas
                 ref={canvasRef}
                 width={W}
@@ -197,7 +208,7 @@ function ShareModal({ onClose }: { onClose: () => void }) {
                 className="w-full h-full block"
               />
               {!photo && (
-                <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm not-italic pointer-events-none">
+                <div className="absolute inset-0 flex items-center justify-center text-white/40 text-xs not-italic pointer-events-none">
                   התמונה שלך תופיע כאן
                 </div>
               )}
@@ -228,7 +239,7 @@ function ShareModal({ onClose }: { onClose: () => void }) {
               onClick={download}
               className="w-full py-4 rounded-xl bg-ink-800 border border-white/15 text-white font-bold hover:bg-ink-700 transition disabled:opacity-40 not-italic"
             >
-              📥 הורד תמונה
+              📥 הורד לסטורי
             </button>
 
             <button
@@ -262,7 +273,7 @@ function ShareModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-/* ────────────────────────────────────────── canvas drawing */
+/* ────────────────────────────────────────── canvas drawing (1080×1920) */
 
 function drawCard(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | null) {
   if (!canvas) return;
@@ -271,23 +282,24 @@ function drawCard(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | nu
 
   // ─── background gradient
   const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, "#0A1018");
+  bg.addColorStop(0, "#0E1726");
+  bg.addColorStop(0.5, "#070C16");
   bg.addColorStop(1, "#05070A");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  // ─── diagonal electric stripes (subtle)
+  // ─── diagonal subtle stripes
   ctx.save();
   ctx.translate(W / 2, H / 2);
   ctx.rotate(-Math.PI / 6);
-  ctx.fillStyle = "rgba(27,164,224,0.06)";
-  for (let i = -2000; i < 2000; i += 90) {
-    ctx.fillRect(i, -2000, 50, 4000);
+  ctx.fillStyle = "rgba(27,164,224,0.05)";
+  for (let i = -2500; i < 2500; i += 100) {
+    ctx.fillRect(i, -2500, 50, 5000);
   }
   ctx.restore();
 
-  // ─── photo area (top 70%)
-  const photoH = Math.floor(H * 0.68);
+  // ─── photo area: top 60% of canvas
+  const photoH = Math.floor(H * 0.6);
   if (photo) {
     const ratio = Math.max(W / photo.width, photoH / photo.height);
     const drawW = photo.width * ratio;
@@ -296,10 +308,10 @@ function drawCard(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | nu
     const dy = (photoH - drawH) / 2;
     ctx.drawImage(photo, dx, dy, drawW, drawH);
 
-    // duotone overlay (electric blue → ink)
+    // electric blue duotone overlay
     const overlay = ctx.createLinearGradient(0, 0, 0, photoH);
     overlay.addColorStop(0, "rgba(27,164,224,0.18)");
-    overlay.addColorStop(0.6, "rgba(5,7,10,0)");
+    overlay.addColorStop(0.55, "rgba(5,7,10,0)");
     overlay.addColorStop(1, "rgba(5,7,10,0.96)");
     ctx.fillStyle = overlay;
     ctx.fillRect(0, 0, W, photoH);
@@ -311,55 +323,65 @@ function drawCard(canvas: HTMLCanvasElement | null, photo: HTMLImageElement | nu
     ctx.fillRect(0, 0, W, photoH);
   }
 
-  // ─── electric divider
-  ctx.fillStyle = "#1BA4E0";
-  ctx.shadowColor = "rgba(27,164,224,0.8)";
-  ctx.shadowBlur = 25;
-  ctx.fillRect(0, photoH - 5, W, 5);
-  ctx.shadowBlur = 0;
-
-  // ─── bottom panel
-  ctx.fillStyle = "#05070A";
-  ctx.fillRect(0, photoH, W, H - photoH);
-
-  // ─── kicker badge "30-31.7 | ראשל"צ"
-  ctx.fillStyle = "rgba(27,164,224,0.15)";
-  ctx.strokeStyle = "#1BA4E0";
-  ctx.lineWidth = 2;
-  const badgeY = photoH + 50;
-  roundedRect(ctx, W / 2 - 320, badgeY, 640, 70, 35);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = "#1BA4E0";
-  ctx.font = "bold 38px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText("30-31.7  •  ראשון לציון", W / 2, badgeY + 47);
-
-  // ─── tagline "אני מגיע לאירוע"
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 70px sans-serif";
-  ctx.fillText("אני מגיע לאירוע", W / 2, photoH + 200);
-
-  // ─── CALIMA wordmark
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "900 90px sans-serif";
-  ctx.fillText("CALIMA", W / 2, photoH + 285);
-
-  // ─── BATTLES 3 (electric, glowing)
+  // ─── electric glowing divider
   ctx.save();
   ctx.shadowColor = "rgba(27,164,224,0.85)";
-  ctx.shadowBlur = 35;
+  ctx.shadowBlur = 30;
   ctx.fillStyle = "#1BA4E0";
-  ctx.font = "900 120px sans-serif";
-  ctx.fillText("BATTLES 3", W / 2, photoH + 380);
+  ctx.fillRect(0, photoH - 6, W, 6);
   ctx.restore();
 
-  // ─── URL footer
+  // ─── bottom panel
+  ctx.fillStyle = "transparent";
+
+  // ─── kicker "אני מגיע ל-" — slim italic
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.font = `italic 600 56px ${FONT_STACK}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("אני מגיע ל-", W / 2, photoH + 130);
+
+  // ─── CALIMA wordmark — heavy, white
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = `800 italic 130px ${FONT_STACK}`;
+  ctx.letterSpacing = "0px";
+  ctx.fillText("CALIMA", W / 2, photoH + 280);
+
+  // ─── BATTLES 3 — electric glow
+  ctx.save();
+  ctx.shadowColor = "rgba(27,164,224,0.95)";
+  ctx.shadowBlur = 45;
+  ctx.fillStyle = "#1BA4E0";
+  ctx.font = `800 italic 170px ${FONT_STACK}`;
+  ctx.fillText("BATTLES 3", W / 2, photoH + 440);
+  ctx.restore();
+
+  // ─── date badge
+  const badgeY = photoH + 520;
+  const badgeW = 720;
+  const badgeH = 90;
+  const badgeX = (W - badgeW) / 2;
+  ctx.save();
+  ctx.fillStyle = "rgba(27,164,224,0.12)";
+  ctx.strokeStyle = "#1BA4E0";
+  ctx.lineWidth = 3;
+  roundedRect(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.fillStyle = "#1BA4E0";
+  ctx.font = `700 48px ${FONT_STACK}`;
+  ctx.fillText("30-31.7  •  ראשון לציון", W / 2, badgeY + 62);
+
+  // ─── URL — bottom
   ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.font = "bold 32px sans-serif";
-  ctx.fillText("battles3.calima.co.il", W / 2, H - 35);
+  ctx.font = `600 36px ${FONT_STACK}`;
+  ctx.fillText("battles3.calima.co.il", W / 2, H - 80);
+
+  // ─── subtle bottom electric accent line
+  ctx.fillStyle = "rgba(27,164,224,0.6)";
+  ctx.fillRect(W / 2 - 80, H - 50, 160, 4);
 }
 
 function roundedRect(
