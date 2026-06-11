@@ -225,12 +225,12 @@ export default function AdminPage() {
       {/* Mascot + Analytics row */}
       <div className="grid lg:grid-cols-[280px,1fr] gap-4 mb-6">
         <div className="card p-3 sm:p-4 flex flex-col items-center justify-center">
-          <div className="text-electric-400 text-[10px] uppercase tracking-[0.4em] mb-1 not-italic">
-            הקליסטניק הקטן
+          <div className="text-amber-300 text-[10px] uppercase tracking-[0.4em] mb-1 not-italic">
+            ✦ Goku Calisthenics ✦
           </div>
           <CalisthenicsMascot />
           <div className="text-white/40 text-[10px] not-italic mt-1">
-            הזיז את הסמן והוא רודף 🎯
+            הזיז את הסמן 🥋 ועקוב אחרי הקיי-מי-המה
           </div>
         </div>
         <div>

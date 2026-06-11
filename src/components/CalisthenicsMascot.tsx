@@ -233,7 +233,7 @@ export function CalisthenicsMascot() {
           cy={H - 18}
           rx={42 + Math.abs(leanX) * 0.6}
           ry={5.5}
-          fill="rgba(27,164,224,0.25)"
+          fill="rgba(255,166,0,0.3)"
           style={{ filter: "blur(2px)" }}
         />
 
@@ -243,10 +243,22 @@ export function CalisthenicsMascot() {
           y1={H - 12}
           x2={W - 20}
           y2={H - 12}
-          stroke="rgba(27,164,224,0.5)"
+          stroke="rgba(27,164,224,0.45)"
           strokeWidth={2}
           strokeLinecap="round"
         />
+
+        {/* golden aura — pulses in handstand mode (Super Saiyan vibes) */}
+        {flip > 0.2 && (
+          <circle
+            cx={CX}
+            cy={CY}
+            r={70 + flip * 20}
+            fill="url(#aura)"
+            opacity={flip * 0.55}
+            style={{ filter: "blur(8px)" }}
+          />
+        )}
 
         {/* character group — rotated for handstand */}
         <g
@@ -257,29 +269,49 @@ export function CalisthenicsMascot() {
           }}
         >
           {/* legs (rendered first so they sit "behind" torso joints) */}
-          <Limb a={HIP_L} b={legL.joint} c={legL.end} />
-          <Limb a={HIP_R} b={legR.joint} c={legR.end} />
+          <GokuLimb a={HIP_L} b={legL.joint} c={legL.end} kind="leg" />
+          <GokuLimb a={HIP_R} b={legR.joint} c={legR.end} kind="leg" />
 
-          {/* torso */}
+          {/* gi (torso) — orange jacket */}
           <path
             d={`M ${SHOULDER_L.x + leanX} ${SHOULDER_Y}
                 L ${SHOULDER_R.x + leanX} ${SHOULDER_Y}
-                L ${HIP_R.x} ${HIP_Y}
-                L ${HIP_L.x} ${HIP_Y} Z`}
-            fill="url(#torso)"
-            stroke="#1BA4E0"
-            strokeWidth={2.5}
+                L ${HIP_R.x + 4} ${HIP_Y}
+                L ${HIP_L.x - 4} ${HIP_Y} Z`}
+            fill="#EE7E1A"
+            stroke="#A14507"
+            strokeWidth={2}
             strokeLinejoin="round"
           />
+          {/* gi center seam */}
+          <line
+            x1={CX + leanX * 0.6}
+            y1={SHOULDER_Y + 2}
+            x2={CX}
+            y2={HIP_Y - 1}
+            stroke="#A14507"
+            strokeWidth={1.5}
+          />
+          {/* blue belt */}
+          <rect
+            x={HIP_L.x - 6}
+            y={HIP_Y - 6}
+            width={HIP_R.x - HIP_L.x + 12}
+            height={9}
+            fill="#1B4DA8"
+            stroke="#0E2E66"
+            strokeWidth={1.2}
+            rx={1.5}
+          />
 
-          {/* neck */}
+          {/* neck (skin tone) */}
           <line
             x1={CX + leanX}
             y1={SHOULDER_Y}
             x2={CX + leanX * 0.6}
             y2={NECK_Y}
-            stroke="#1BA4E0"
-            strokeWidth={5.5}
+            stroke="#F5C8A0"
+            strokeWidth={6}
             strokeLinecap="round"
           />
 
@@ -289,64 +321,150 @@ export function CalisthenicsMascot() {
               (headRot * 180) / Math.PI
             })`}
           >
-            <circle cx={0} cy={0} r={HEAD_R} fill="#EBC9A0" stroke="#1BA4E0" strokeWidth={2.5} />
-            {/* hair stripe */}
+            {/* face circle (skin) */}
+            <circle cx={0} cy={2} r={HEAD_R} fill="#F5C8A0" stroke="#A14507" strokeWidth={1.8} />
+
+            {/* SPIKY HAIR — Goku's signature */}
             <path
-              d={`M ${-HEAD_R + 4} ${-4} Q 0 ${-HEAD_R - 4} ${HEAD_R - 4} ${-4}`}
-              fill="#0E1726"
+              d={`
+                M ${-HEAD_R + 2} ${0}
+                L ${-HEAD_R - 4} ${-HEAD_R - 2}
+                L ${-HEAD_R + 4} ${-HEAD_R + 2}
+                L ${-12} ${-HEAD_R - 8}
+                L ${-7} ${-HEAD_R + 1}
+                L ${-3} ${-HEAD_R - 11}
+                L ${1} ${-HEAD_R + 1}
+                L ${5} ${-HEAD_R - 10}
+                L ${9} ${-HEAD_R}
+                L ${13} ${-HEAD_R - 7}
+                L ${HEAD_R - 3} ${-HEAD_R + 3}
+                L ${HEAD_R + 4} ${-HEAD_R - 1}
+                L ${HEAD_R - 1} ${0}
+                Z
+              `}
+              fill="#181820"
+              stroke="#0B0B12"
+              strokeWidth={1.5}
+              strokeLinejoin="round"
             />
-            {/* eyes */}
-            <circle cx={-5.5 + eyeOx * 0.4} cy={1 + eyeOy * 0.3} r={2.2} fill="#0E1726" />
-            <circle cx={5.5 + eyeOx * 0.4} cy={1 + eyeOy * 0.3} r={2.2} fill="#0E1726" />
-            {/* tiny smile */}
-            <path d="M -4 7 Q 0 10 4 7" stroke="#0E1726" strokeWidth={1.5} fill="none" strokeLinecap="round" />
+            {/* small extra spike at the back */}
+            <path
+              d={`M ${-HEAD_R + 6} ${4} L ${-HEAD_R - 1} ${-2} L ${-HEAD_R + 9} ${-2} Z`}
+              fill="#181820"
+            />
+
+            {/* eyes — round + black pupils that track */}
+            <ellipse cx={-6} cy={3} rx={3.2} ry={3.6} fill="#FFFFFF" />
+            <ellipse cx={6} cy={3} rx={3.2} ry={3.6} fill="#FFFFFF" />
+            <circle cx={-6 + eyeOx * 0.55} cy={3 + eyeOy * 0.45} r={1.8} fill="#0B0B12" />
+            <circle cx={6 + eyeOx * 0.55} cy={3 + eyeOy * 0.45} r={1.8} fill="#0B0B12" />
+
+            {/* eyebrows — heavy / determined */}
+            <path d="M -10 -2 L -3 -0.5" stroke="#0B0B12" strokeWidth={1.8} strokeLinecap="round" />
+            <path d="M 3 -0.5 L 10 -2" stroke="#0B0B12" strokeWidth={1.8} strokeLinecap="round" />
+
+            {/* mouth — small smirk */}
+            <path
+              d="M -4 10 Q 0 13 4 10"
+              stroke="#A14507"
+              strokeWidth={1.6}
+              fill="none"
+              strokeLinecap="round"
+            />
           </g>
 
           {/* arms (rendered last so hands appear on top of body) */}
-          <Limb a={{ x: SHOULDER_L.x + leanX, y: SHOULDER_L.y }} b={armL.joint} c={armL.end} />
-          <Limb a={{ x: SHOULDER_R.x + leanX, y: SHOULDER_R.y }} b={armR.joint} c={armR.end} />
+          <GokuLimb
+            a={{ x: SHOULDER_L.x + leanX, y: SHOULDER_L.y }}
+            b={armL.joint}
+            c={armL.end}
+            kind="arm"
+          />
+          <GokuLimb
+            a={{ x: SHOULDER_R.x + leanX, y: SHOULDER_R.y }}
+            b={armR.joint}
+            c={armR.end}
+            kind="arm"
+          />
         </g>
 
         <defs>
-          <linearGradient id="torso" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#1BA4E0" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#0A1018" stopOpacity="0.85" />
-          </linearGradient>
+          <radialGradient id="aura" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stopColor="#FFE873" stopOpacity="1" />
+            <stop offset="60%" stopColor="#FFA94D" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#FF7000" stopOpacity="0" />
+          </radialGradient>
         </defs>
       </svg>
     </div>
   );
 }
 
-function Limb({ a, b, c }: { a: V; b: V; c: V }) {
+/**
+ * Goku-styled limb.
+ *  • Arms:   orange gi sleeve (shoulder → elbow) + skin forearm (elbow → wrist) + blue wristband at wrist + skin hand
+ *  • Legs:   orange gi pant (hip → knee) + blue boot from knee → foot (with white sole)
+ */
+function GokuLimb({
+  a,
+  b,
+  c,
+  kind,
+}: {
+  a: V;
+  b: V;
+  c: V;
+  kind: "arm" | "leg";
+}) {
+  if (kind === "arm") {
+    // Compute a unit vector along the forearm to place the wristband perpendicular-ish
+    const dxF = c.x - b.x;
+    const dyF = c.y - b.y;
+    const lenF = Math.max(1, Math.hypot(dxF, dyF));
+    // Position of the wristband: 78% along the forearm
+    const wbx = b.x + (dxF / lenF) * (lenF * 0.78);
+    const wby = b.y + (dyF / lenF) * (lenF * 0.78);
+    return (
+      <g>
+        {/* upper arm — orange sleeve */}
+        <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#EE7E1A" strokeWidth={10} strokeLinecap="round" />
+        <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#A14507" strokeWidth={1.5} strokeLinecap="round" opacity={0.4} />
+        {/* forearm — skin */}
+        <line x1={b.x} y1={b.y} x2={c.x} y2={c.y} stroke="#F5C8A0" strokeWidth={7.5} strokeLinecap="round" />
+        {/* blue wristband */}
+        <circle cx={wbx} cy={wby} r={5} fill="#1B4DA8" stroke="#0E2E66" strokeWidth={1.2} />
+        {/* elbow seam */}
+        <circle cx={b.x} cy={b.y} r={4} fill="#EE7E1A" stroke="#A14507" strokeWidth={1.2} />
+        {/* shoulder joint */}
+        <circle cx={a.x} cy={a.y} r={5} fill="#EE7E1A" stroke="#A14507" strokeWidth={1.2} />
+        {/* hand — fist */}
+        <circle cx={c.x} cy={c.y} r={5.5} fill="#F5C8A0" stroke="#A14507" strokeWidth={1.3} />
+      </g>
+    );
+  }
+  // leg
   return (
     <g>
-      {/* upper bone */}
+      {/* thigh — orange pants */}
+      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#EE7E1A" strokeWidth={11} strokeLinecap="round" />
+      {/* shin → boot — blue */}
+      <line x1={b.x} y1={b.y} x2={c.x} y2={c.y} stroke="#1B4DA8" strokeWidth={9.5} strokeLinecap="round" />
+      {/* white boot stripe near knee */}
       <line
-        x1={a.x}
-        y1={a.y}
-        x2={b.x}
-        y2={b.y}
-        stroke="#1BA4E0"
-        strokeWidth={8}
+        x1={b.x + (c.x - b.x) * 0.05}
+        y1={b.y + (c.y - b.y) * 0.05}
+        x2={b.x + (c.x - b.x) * 0.18}
+        y2={b.y + (c.y - b.y) * 0.18}
+        stroke="#FFFFFF"
+        strokeWidth={9.5}
         strokeLinecap="round"
       />
-      {/* lower bone */}
-      <line
-        x1={b.x}
-        y1={b.y}
-        x2={c.x}
-        y2={c.y}
-        stroke="#1BA4E0"
-        strokeWidth={7}
-        strokeLinecap="round"
-      />
-      {/* shoulder/hip joint */}
-      <circle cx={a.x} cy={a.y} r={4.5} fill="#0E1726" stroke="#1BA4E0" strokeWidth={2} />
-      {/* elbow/knee joint */}
-      <circle cx={b.x} cy={b.y} r={3.8} fill="#0E1726" stroke="#1BA4E0" strokeWidth={2} />
-      {/* hand/foot */}
-      <circle cx={c.x} cy={c.y} r={5.2} fill="#1BA4E0" />
+      {/* knee joint */}
+      <circle cx={b.x} cy={b.y} r={4.5} fill="#EE7E1A" stroke="#A14507" strokeWidth={1.2} />
+      {/* hip joint */}
+      <circle cx={a.x} cy={a.y} r={5} fill="#EE7E1A" stroke="#A14507" strokeWidth={1.2} />
+      {/* boot tip */}
+      <ellipse cx={c.x} cy={c.y} rx={7} ry={5.5} fill="#1B4DA8" stroke="#0E2E66" strokeWidth={1.2} />
     </g>
   );
 }
