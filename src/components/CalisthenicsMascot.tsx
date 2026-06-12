@@ -3,99 +3,47 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Calisthenics athlete mascot.
- *
- *  • SVG stick-figure with 2-bone IK arms and legs that reach toward
- *    the mouse cursor in real time.
- *  • Head subtly rotates so the face looks at the cursor.
- *  • Every ~10s the athlete kicks into a handstand (body flips 180°,
- *    legs become the active limbs chasing the cursor; palms plant on
- *    the floor). After ~5s standing-up flips back.
- *  • Pure client-side, no deps. Lives in a card the admin can drop
- *    wherever on the page.
+ * Goku mascot.
+ *  • Uses /public/goku.JPG as the actual character.
+ *  • The figure leans/tilts toward the mouse cursor.
+ *  • Every ~10s it kicks into a handstand (180° flip) and holds it
+ *    for ~5s before returning. During the handstand a Super-Saiyan
+ *    aura pulses behind it.
+ *  • Floor shadow that moves with the lean.
  */
 
 const W = 260;
 const H = 360;
-
-// proportions (body-frame coords; +y = down, +x = right)
 const CX = W / 2;
 const CY = H * 0.5;
 
-const HEAD_R = 18;
-const NECK_LEN = 10;
-const TORSO = 76;
-const SHOULDER_W = 32;
-const HIP_W = 24;
-
-const UPPER_ARM = 38;
-const FOREARM = 42;
-const UPPER_LEG = 50;
-const LOWER_LEG = 54;
-
-const SHOULDER_Y = CY - TORSO / 2;
-const HIP_Y = CY + TORSO / 2;
-const NECK_Y = SHOULDER_Y - NECK_LEN;
-const HEAD_Y = NECK_Y - HEAD_R;
-
-const SHOULDER_L = { x: CX - SHOULDER_W, y: SHOULDER_Y };
-const SHOULDER_R = { x: CX + SHOULDER_W, y: SHOULDER_Y };
-const HIP_L = { x: CX - HIP_W, y: HIP_Y };
-const HIP_R = { x: CX + HIP_W, y: HIP_Y };
+// Image proportions on canvas
+const IMG_W = 200;
+const IMG_H = 280;
+const IMG_X = CX - IMG_W / 2;
+const IMG_Y = CY - IMG_H / 2;
 
 type V = { x: number; y: number };
 
-function clampToReach(o: V, t: V, max: number): V {
-  const dx = t.x - o.x;
-  const dy = t.y - o.y;
-  const d = Math.hypot(dx, dy);
-  if (d <= max) return t;
-  const s = max / d;
-  return { x: o.x + dx * s, y: o.y + dy * s };
-}
-
-interface IK {
-  joint: V;
-  end: V;
-}
-
-/** 2-bone analytic IK. bend = +1 elbow bends one way, -1 the other. */
-function ik2(o: V, target: V, L1: number, L2: number, bend: 1 | -1): IK {
-  const t = clampToReach(o, target, L1 + L2 - 1);
-  const dx = t.x - o.x;
-  const dy = t.y - o.y;
-  const d = Math.max(1, Math.hypot(dx, dy));
-  const base = Math.atan2(dy, dx);
-  const cosA = (L1 * L1 + d * d - L2 * L2) / (2 * L1 * d);
-  const a = Math.acos(Math.min(1, Math.max(-1, cosA)));
-  const upper = base - a * bend;
-  return {
-    joint: { x: o.x + Math.cos(upper) * L1, y: o.y + Math.sin(upper) * L1 },
-    end: t,
-  };
-}
-
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t;
-}
 function easeInOut(t: number) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
 }
 
 export function CalisthenicsMascot() {
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  // Latest mouse position in container coords (refs so the animation
-  // loop is cheap and doesn't trigger React renders).
+  // Mouse position (refs to keep the animation loop cheap)
   const rawTarget = useRef<V>({ x: CX, y: CY - 80 });
   const smoothTarget = useRef<V>({ x: CX, y: CY - 80 });
   const flipRef = useRef(0); // 0 = stand, 1 = handstand
   const rafRef = useRef(0);
 
-  // State just to trigger render
+  // dummy state just to trigger re-render at 60fps
   const [, force] = useState(0);
 
-  // Track mouse globally relative to our container
   useEffect(() => {
     function onMove(e: MouseEvent) {
       const r = wrapRef.current?.getBoundingClientRect();
@@ -106,11 +54,10 @@ export function CalisthenicsMascot() {
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
-  // Animation loop — smooth toward target and re-render at 60fps
   useEffect(() => {
     function tick() {
-      smoothTarget.current.x += (rawTarget.current.x - smoothTarget.current.x) * 0.18;
-      smoothTarget.current.y += (rawTarget.current.y - smoothTarget.current.y) * 0.18;
+      smoothTarget.current.x += (rawTarget.current.x - smoothTarget.current.x) * 0.16;
+      smoothTarget.current.y += (rawTarget.current.y - smoothTarget.current.y) * 0.16;
       force((n) => (n + 1) % 1000000);
       rafRef.current = requestAnimationFrame(tick);
     }
@@ -118,100 +65,61 @@ export function CalisthenicsMascot() {
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
-  // Periodic handstand cycle: stand 9s → kick-up 600ms → hold 5s → kick-down 600ms
+  // Periodic handstand: stand 9s → flip 700ms → hold 5s → unflip 700ms
   useEffect(() => {
     let alive = true;
-
-    async function run() {
-      while (alive) {
-        await sleep(9000);
-        if (!alive) return;
-        await anim(600, (p) => (flipRef.current = easeInOut(p)));
-        if (!alive) return;
-        await sleep(5000);
-        if (!alive) return;
-        await anim(600, (p) => (flipRef.current = 1 - easeInOut(p)));
-      }
-    }
-
     function sleep(ms: number) {
       return new Promise<void>((r) => setTimeout(r, ms));
     }
     function anim(durMs: number, setter: (p: number) => void) {
       return new Promise<void>((resolve) => {
         const start = performance.now();
-        const step = () => {
+        function step() {
           const t = Math.min(1, (performance.now() - start) / durMs);
           setter(t);
           if (t < 1 && alive) requestAnimationFrame(step);
           else resolve();
-        };
+        }
         requestAnimationFrame(step);
       });
     }
-
+    async function run() {
+      while (alive) {
+        await sleep(9000);
+        if (!alive) return;
+        await anim(700, (p) => (flipRef.current = easeInOut(p)));
+        if (!alive) return;
+        await sleep(5000);
+        if (!alive) return;
+        await anim(700, (p) => (flipRef.current = 1 - easeInOut(p)));
+      }
+    }
     run();
     return () => {
       alive = false;
     };
   }, []);
 
-  // ---------- compute skeleton ----------
+  // ---- compute orientation ----
   const flip = flipRef.current;
-  const angle = flip * Math.PI; // rotation applied at render time
+  const flipAngle = flip * Math.PI; // 0..π
 
-  // Inverse-rotate mouse to body frame
+  // Inverse-rotate mouse to body frame for lean calculation
   const dx = smoothTarget.current.x - CX;
   const dy = smoothTarget.current.y - CY;
-  const cosA = Math.cos(-angle);
-  const sinA = Math.sin(-angle);
+  const cosA = Math.cos(-flipAngle);
+  const sinA = Math.sin(-flipAngle);
   const localMouse = {
     x: CX + dx * cosA - dy * sinA,
     y: CY + dx * sinA + dy * cosA,
   };
 
-  // When flipped > 0.5 we treat as handstand mode.
-  // Smoothly interpolate so the switch isn't jarring.
-  const tFlip = flip; // 0..1
-  const handMix = Math.min(1, Math.max(0, (tFlip - 0.4) / 0.2));
+  // Lean: tilt toward mouse direction (max ±12°)
+  const leanRad = clamp((localMouse.x - CX) * 0.0015, -0.21, 0.21);
+  // Slight forward/backward sway: shift image down a bit when mouse above
+  const swayY = clamp((CY - localMouse.y) * 0.04, -6, 6);
 
-  // Arm target: lerp between (mouse) and (planted on ground)
-  // "ground" in body frame during handstand = above shoulders (since rotated 180°)
-  const groundedArmTarget = { x: CX, y: SHOULDER_Y - 90 };
-  const armTarget = {
-    x: lerp(localMouse.x, groundedArmTarget.x, handMix),
-    y: lerp(localMouse.y, groundedArmTarget.y, handMix),
-  };
-
-  // Leg target: lerp between (planted down) and (mouse, in handstand)
-  const groundedLegTarget = { x: CX, y: HIP_Y + 90 };
-  const legTarget = {
-    x: lerp(groundedLegTarget.x, localMouse.x, handMix),
-    y: lerp(groundedLegTarget.y, localMouse.y, handMix),
-  };
-
-  // Slight body lean toward the cursor
-  const leanX = clamp((localMouse.x - CX) * 0.03, -8, 8);
-
-  // IK chains
-  const armL = ik2({ x: SHOULDER_L.x + leanX, y: SHOULDER_L.y }, armTarget, UPPER_ARM, FOREARM, +1);
-  const armR = ik2({ x: SHOULDER_R.x + leanX, y: SHOULDER_R.y }, armTarget, UPPER_ARM, FOREARM, -1);
-  const legL = ik2(HIP_L, legTarget, UPPER_LEG, LOWER_LEG, -1);
-  const legR = ik2(HIP_R, legTarget, UPPER_LEG, LOWER_LEG, +1);
-
-  // Head: look at mouse (rotate slightly, eyes track)
-  const headTo = localMouse;
-  const headDx = headTo.x - CX;
-  const headDy = headTo.y - HEAD_Y;
-  const headAngle = Math.atan2(headDy, headDx) + Math.PI / 2; // 0 = face up
-  // Limit head rotation
-  const headRot = clamp(headAngle, -1.1, 1.1);
-
-  // Eye offsets (track within head)
-  const eyeMag = 3.2;
-  const eyeDist = Math.max(1, Math.hypot(headDx, headDy));
-  const eyeOx = (headDx / eyeDist) * eyeMag;
-  const eyeOy = (headDy / eyeDist) * eyeMag;
+  const totalRot = flipAngle + leanRad; // radians
 
   return (
     <div
@@ -220,7 +128,6 @@ export function CalisthenicsMascot() {
       style={{ height: H }}
       aria-hidden
     >
-      {/* Floor line + soft shadow */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
         width="100%"
@@ -229,12 +136,12 @@ export function CalisthenicsMascot() {
       >
         {/* shadow */}
         <ellipse
-          cx={CX + leanX * 0.7}
+          cx={CX + Math.sin(leanRad) * 28}
           cy={H - 18}
-          rx={42 + Math.abs(leanX) * 0.6}
-          ry={5.5}
-          fill="rgba(255,166,0,0.3)"
-          style={{ filter: "blur(2px)" }}
+          rx={48 + Math.abs(leanRad) * 30}
+          ry={6}
+          fill="rgba(0,0,0,0.45)"
+          style={{ filter: "blur(3px)" }}
         />
 
         {/* electric ground line */}
@@ -248,143 +155,46 @@ export function CalisthenicsMascot() {
           strokeLinecap="round"
         />
 
-        {/* golden aura — pulses in handstand mode (Super Saiyan vibes) */}
-        {flip > 0.2 && (
-          <circle
-            cx={CX}
-            cy={CY}
-            r={70 + flip * 20}
-            fill="url(#aura)"
-            opacity={flip * 0.55}
-            style={{ filter: "blur(8px)" }}
-          />
+        {/* golden aura — pulses in handstand mode */}
+        {flip > 0.1 && (
+          <>
+            <circle
+              cx={CX}
+              cy={CY}
+              r={95 + flip * 25}
+              fill="url(#aura)"
+              opacity={flip * 0.55}
+              style={{ filter: "blur(14px)" }}
+            />
+            <circle
+              cx={CX}
+              cy={CY}
+              r={75 + flip * 15}
+              fill="url(#auraInner)"
+              opacity={flip * 0.7}
+              style={{ filter: "blur(6px)" }}
+            />
+          </>
         )}
 
-        {/* character group — rotated for handstand */}
+        {/* Goku image — rotates with flip + lean */}
         <g
           style={{
-            transform: `rotate(${angle}rad)`,
+            transform: `rotate(${(totalRot * 180) / Math.PI}deg) translate(0px, ${swayY}px)`,
             transformOrigin: `${CX}px ${CY}px`,
-            transition: "transform 0s",
           }}
         >
-          {/* legs (rendered first so they sit "behind" torso joints) */}
-          <GokuLimb a={HIP_L} b={legL.joint} c={legL.end} kind="leg" />
-          <GokuLimb a={HIP_R} b={legR.joint} c={legR.end} kind="leg" />
-
-          {/* gi (torso) — orange jacket */}
-          <path
-            d={`M ${SHOULDER_L.x + leanX} ${SHOULDER_Y}
-                L ${SHOULDER_R.x + leanX} ${SHOULDER_Y}
-                L ${HIP_R.x + 4} ${HIP_Y}
-                L ${HIP_L.x - 4} ${HIP_Y} Z`}
-            fill="#EE7E1A"
-            stroke="#A14507"
-            strokeWidth={2}
-            strokeLinejoin="round"
-          />
-          {/* gi center seam */}
-          <line
-            x1={CX + leanX * 0.6}
-            y1={SHOULDER_Y + 2}
-            x2={CX}
-            y2={HIP_Y - 1}
-            stroke="#A14507"
-            strokeWidth={1.5}
-          />
-          {/* blue belt */}
-          <rect
-            x={HIP_L.x - 6}
-            y={HIP_Y - 6}
-            width={HIP_R.x - HIP_L.x + 12}
-            height={9}
-            fill="#1B4DA8"
-            stroke="#0E2E66"
-            strokeWidth={1.2}
-            rx={1.5}
-          />
-
-          {/* neck (skin tone) */}
-          <line
-            x1={CX + leanX}
-            y1={SHOULDER_Y}
-            x2={CX + leanX * 0.6}
-            y2={NECK_Y}
-            stroke="#F5C8A0"
-            strokeWidth={6}
-            strokeLinecap="round"
-          />
-
-          {/* head — rotates to look at mouse */}
-          <g
-            transform={`translate(${CX + leanX * 0.5} ${HEAD_Y}) rotate(${
-              (headRot * 180) / Math.PI
-            })`}
-          >
-            {/* face circle (skin) */}
-            <circle cx={0} cy={2} r={HEAD_R} fill="#F5C8A0" stroke="#A14507" strokeWidth={1.8} />
-
-            {/* SPIKY HAIR — Goku's signature */}
-            <path
-              d={`
-                M ${-HEAD_R + 2} ${0}
-                L ${-HEAD_R - 4} ${-HEAD_R - 2}
-                L ${-HEAD_R + 4} ${-HEAD_R + 2}
-                L ${-12} ${-HEAD_R - 8}
-                L ${-7} ${-HEAD_R + 1}
-                L ${-3} ${-HEAD_R - 11}
-                L ${1} ${-HEAD_R + 1}
-                L ${5} ${-HEAD_R - 10}
-                L ${9} ${-HEAD_R}
-                L ${13} ${-HEAD_R - 7}
-                L ${HEAD_R - 3} ${-HEAD_R + 3}
-                L ${HEAD_R + 4} ${-HEAD_R - 1}
-                L ${HEAD_R - 1} ${0}
-                Z
-              `}
-              fill="#181820"
-              stroke="#0B0B12"
-              strokeWidth={1.5}
-              strokeLinejoin="round"
-            />
-            {/* small extra spike at the back */}
-            <path
-              d={`M ${-HEAD_R + 6} ${4} L ${-HEAD_R - 1} ${-2} L ${-HEAD_R + 9} ${-2} Z`}
-              fill="#181820"
-            />
-
-            {/* eyes — round + black pupils that track */}
-            <ellipse cx={-6} cy={3} rx={3.2} ry={3.6} fill="#FFFFFF" />
-            <ellipse cx={6} cy={3} rx={3.2} ry={3.6} fill="#FFFFFF" />
-            <circle cx={-6 + eyeOx * 0.55} cy={3 + eyeOy * 0.45} r={1.8} fill="#0B0B12" />
-            <circle cx={6 + eyeOx * 0.55} cy={3 + eyeOy * 0.45} r={1.8} fill="#0B0B12" />
-
-            {/* eyebrows — heavy / determined */}
-            <path d="M -10 -2 L -3 -0.5" stroke="#0B0B12" strokeWidth={1.8} strokeLinecap="round" />
-            <path d="M 3 -0.5 L 10 -2" stroke="#0B0B12" strokeWidth={1.8} strokeLinecap="round" />
-
-            {/* mouth — small smirk */}
-            <path
-              d="M -4 10 Q 0 13 4 10"
-              stroke="#A14507"
-              strokeWidth={1.6}
-              fill="none"
-              strokeLinecap="round"
-            />
-          </g>
-
-          {/* arms (rendered last so hands appear on top of body) */}
-          <GokuLimb
-            a={{ x: SHOULDER_L.x + leanX, y: SHOULDER_L.y }}
-            b={armL.joint}
-            c={armL.end}
-            kind="arm"
-          />
-          <GokuLimb
-            a={{ x: SHOULDER_R.x + leanX, y: SHOULDER_R.y }}
-            b={armR.joint}
-            c={armR.end}
-            kind="arm"
+          <image
+            href="/goku-mascot.jpg"
+            x={IMG_X}
+            y={IMG_Y}
+            width={IMG_W}
+            height={IMG_H}
+            preserveAspectRatio="xMidYMid meet"
+            clipPath="url(#gokuClip)"
+            style={{
+              filter: flip > 0.3 ? `drop-shadow(0 0 12px rgba(255, 215, 73, ${flip * 0.8}))` : undefined,
+            }}
           />
         </g>
 
@@ -394,81 +204,17 @@ export function CalisthenicsMascot() {
             <stop offset="60%" stopColor="#FFA94D" stopOpacity="0.6" />
             <stop offset="100%" stopColor="#FF7000" stopOpacity="0" />
           </radialGradient>
+          <radialGradient id="auraInner" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+            <stop offset="50%" stopColor="#FFE873" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#FFA94D" stopOpacity="0" />
+          </radialGradient>
+          {/* soft rounded clip so the image edges feel less harsh */}
+          <clipPath id="gokuClip">
+            <rect x={IMG_X} y={IMG_Y} width={IMG_W} height={IMG_H} rx={14} ry={14} />
+          </clipPath>
         </defs>
       </svg>
     </div>
   );
-}
-
-/**
- * Goku-styled limb.
- *  • Arms:   orange gi sleeve (shoulder → elbow) + skin forearm (elbow → wrist) + blue wristband at wrist + skin hand
- *  • Legs:   orange gi pant (hip → knee) + blue boot from knee → foot (with white sole)
- */
-function GokuLimb({
-  a,
-  b,
-  c,
-  kind,
-}: {
-  a: V;
-  b: V;
-  c: V;
-  kind: "arm" | "leg";
-}) {
-  if (kind === "arm") {
-    // Compute a unit vector along the forearm to place the wristband perpendicular-ish
-    const dxF = c.x - b.x;
-    const dyF = c.y - b.y;
-    const lenF = Math.max(1, Math.hypot(dxF, dyF));
-    // Position of the wristband: 78% along the forearm
-    const wbx = b.x + (dxF / lenF) * (lenF * 0.78);
-    const wby = b.y + (dyF / lenF) * (lenF * 0.78);
-    return (
-      <g>
-        {/* upper arm — orange sleeve */}
-        <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#EE7E1A" strokeWidth={10} strokeLinecap="round" />
-        <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#A14507" strokeWidth={1.5} strokeLinecap="round" opacity={0.4} />
-        {/* forearm — skin */}
-        <line x1={b.x} y1={b.y} x2={c.x} y2={c.y} stroke="#F5C8A0" strokeWidth={7.5} strokeLinecap="round" />
-        {/* blue wristband */}
-        <circle cx={wbx} cy={wby} r={5} fill="#1B4DA8" stroke="#0E2E66" strokeWidth={1.2} />
-        {/* elbow seam */}
-        <circle cx={b.x} cy={b.y} r={4} fill="#EE7E1A" stroke="#A14507" strokeWidth={1.2} />
-        {/* shoulder joint */}
-        <circle cx={a.x} cy={a.y} r={5} fill="#EE7E1A" stroke="#A14507" strokeWidth={1.2} />
-        {/* hand — fist */}
-        <circle cx={c.x} cy={c.y} r={5.5} fill="#F5C8A0" stroke="#A14507" strokeWidth={1.3} />
-      </g>
-    );
-  }
-  // leg
-  return (
-    <g>
-      {/* thigh — orange pants */}
-      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#EE7E1A" strokeWidth={11} strokeLinecap="round" />
-      {/* shin → boot — blue */}
-      <line x1={b.x} y1={b.y} x2={c.x} y2={c.y} stroke="#1B4DA8" strokeWidth={9.5} strokeLinecap="round" />
-      {/* white boot stripe near knee */}
-      <line
-        x1={b.x + (c.x - b.x) * 0.05}
-        y1={b.y + (c.y - b.y) * 0.05}
-        x2={b.x + (c.x - b.x) * 0.18}
-        y2={b.y + (c.y - b.y) * 0.18}
-        stroke="#FFFFFF"
-        strokeWidth={9.5}
-        strokeLinecap="round"
-      />
-      {/* knee joint */}
-      <circle cx={b.x} cy={b.y} r={4.5} fill="#EE7E1A" stroke="#A14507" strokeWidth={1.2} />
-      {/* hip joint */}
-      <circle cx={a.x} cy={a.y} r={5} fill="#EE7E1A" stroke="#A14507" strokeWidth={1.2} />
-      {/* boot tip */}
-      <ellipse cx={c.x} cy={c.y} rx={7} ry={5.5} fill="#1B4DA8" stroke="#0E2E66" strokeWidth={1.2} />
-    </g>
-  );
-}
-
-function clamp(v: number, lo: number, hi: number) {
-  return Math.max(lo, Math.min(hi, v));
 }
