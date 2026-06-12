@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CATEGORIES } from "@/lib/competition";
 import { AnalyticsPanel } from "@/components/AnalyticsPanel";
-import { CalisthenicsMascot } from "@/components/CalisthenicsMascot";
 
 // Same Sheet ID we wire to the rest of the app via env on the server.
 // Hard-coded here so the admin gets a one-click open link to the sheet.
@@ -222,21 +221,8 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* Mascot + Analytics row */}
-      <div className="grid lg:grid-cols-[280px,1fr] gap-4 mb-6">
-        <div className="card p-3 sm:p-4 flex flex-col items-center justify-center">
-          <div className="text-amber-300 text-[10px] uppercase tracking-[0.4em] mb-1 not-italic">
-            ✦ Goku Calisthenics ✦
-          </div>
-          <CalisthenicsMascot />
-          <div className="text-white/40 text-[10px] not-italic mt-1">
-            הזיז את הסמן 🥋 ועקוב אחרי הקיי-מי-המה
-          </div>
-        </div>
-        <div>
-          <AnalyticsPanel adminKey={adminKey} />
-        </div>
-      </div>
+      {/* Analytics */}
+      <AnalyticsPanel adminKey={adminKey} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-6">
