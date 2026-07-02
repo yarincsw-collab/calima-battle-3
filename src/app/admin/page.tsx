@@ -260,7 +260,7 @@ export default function AdminPage() {
             <button
               key={f.v}
               onClick={() => setStatusFilter(f.v)}
-              className={`px-3 py-1.5 rounded-full text-xs border transition ${
+              className={`px-3 py-1.5 rounded-full text-xs border ${
                 statusFilter === f.v
                   ? "bg-electric-500 text-ink-950 border-electric-500"
                   : "border-white/15 text-white/70 hover:border-electric-500/40"
@@ -278,7 +278,7 @@ export default function AdminPage() {
         <div className="flex flex-wrap gap-2 mb-4">
           <button
             onClick={() => setCategoryFilter("all")}
-            className={`px-3 py-1.5 rounded-full text-xs border transition ${
+            className={`px-3 py-1.5 rounded-full text-xs border ${
               categoryFilter === "all"
                 ? "bg-electric-500 text-ink-950 border-electric-500"
                 : "border-white/15 text-white/70 hover:border-electric-500/40"
@@ -301,7 +301,7 @@ export default function AdminPage() {
               <button
                 key={c.id}
                 onClick={() => setCategoryFilter(c.id)}
-                className={`px-3 py-1.5 rounded-full text-xs border transition ${
+                className={`px-3 py-1.5 rounded-full text-xs border ${
                   categoryFilter === c.id
                     ? "bg-electric-500 text-ink-950 border-electric-500"
                     : "border-white/15 text-white/70 hover:border-electric-500/40"

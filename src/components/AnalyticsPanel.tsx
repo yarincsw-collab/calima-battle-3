@@ -206,7 +206,7 @@ function FunnelStep({
       </div>
       <div className="h-2 rounded-full bg-white/5 overflow-hidden">
         <div
-          className="h-full bg-electric-500 rounded-full transition-all"
+          className="h-full bg-electric-500 rounded-full"
           style={{ width: `${width}%` }}
         />
       </div>
