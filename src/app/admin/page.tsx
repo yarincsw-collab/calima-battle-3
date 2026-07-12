@@ -743,8 +743,13 @@ function RegRow({
 }) {
   const isPro = (reg.categoryIds || []).includes("freestyle_pro_national");
   const status = statusLabel(reg.paymentStatus);
+  const isAccepted = reg.paymentStatus === "approved" || reg.paymentStatus === "charged";
   return (
-    <div className="card p-4 sm:p-5">
+    <div
+      className={`card p-4 sm:p-5 ${
+        isAccepted ? "border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.35)]" : ""
+      }`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
         <div>
           <div className="text-white font-bold text-lg not-italic">{reg.fullName} <span className="text-white/40 text-sm">• {reg.age}</span></div>
