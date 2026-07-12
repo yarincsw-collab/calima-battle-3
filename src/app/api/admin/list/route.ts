@@ -39,6 +39,7 @@ export async function GET(req: Request) {
         email: r.email ?? "",
         phone: r.phone ?? "",
         categories: labels,
+        categoryIds: cats,
         totalPrice: Number(r.total_price) || 0,
         freestyleVideoUrl: r.freestyle_video_url ?? "",
         enduranceVideoUrl: r.endurance_video_url ?? "",

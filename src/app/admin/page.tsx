@@ -19,6 +19,7 @@ interface Reg {
   email: string;
   phone: string;
   categories: string;
+  categoryIds: string[];
   totalPrice: number;
   freestyleVideoUrl: string;
   enduranceVideoUrl: string;
@@ -204,6 +205,31 @@ export default function AdminPage() {
       `קלימה מתחם קליסטניקס`;
     const url = `https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");
+  }
+
+  /** Move an athlete from "פרו ארצי" to "ארצי" (freestyle). */
+  async function moveProToNational(reg: Reg) {
+    if (!confirm(`להעביר את ${reg.fullName} מ"פרו ארצי" ל"ארצי" בפריסטייל?`)) return;
+    setBusy((b) => ({ ...b, [reg.registrationId]: true }));
+    try {
+      const res = await fetch("/api/admin/move-category", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({
+          registrationId: reg.registrationId,
+          from: "freestyle_pro_national",
+          to: "freestyle_national",
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(`שגיאה: ${err.error || res.status}`);
+        return;
+      }
+      await refresh();
+    } finally {
+      setBusy((b) => ({ ...b, [reg.registrationId]: false }));
+    }
   }
 
   /** Mark a registration as paid after the athlete has paid via iCredit. */
@@ -499,6 +525,7 @@ export default function AdminPage() {
               onReject={() => setStatus(r, "rejected")}
               onSendWhatsApp={() => sendWhatsApp(r)}
               onMarkPaid={() => markPaid(r)}
+              onMoveProToNational={() => moveProToNational(r)}
             />
           ))}
         </div>
@@ -704,6 +731,7 @@ function RegRow({
   onReject,
   onSendWhatsApp,
   onMarkPaid,
+  onMoveProToNational,
 }: {
   reg: Reg;
   busy: boolean;
@@ -711,7 +739,9 @@ function RegRow({
   onReject: () => void;
   onSendWhatsApp: () => void;
   onMarkPaid: () => void;
+  onMoveProToNational: () => void;
 }) {
+  const isPro = (reg.categoryIds || []).includes("freestyle_pro_national");
   const status = statusLabel(reg.paymentStatus);
   return (
     <div className="card p-4 sm:p-5">
@@ -771,6 +801,14 @@ function RegRow({
                 className="text-xs px-3 py-1.5 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 disabled:opacity-30 not-italic">
           ✓ סמן כמשולם
         </button>
+        {isPro && (
+          <button onClick={onMoveProToNational}
+                  disabled={busy}
+                  title="העבר מהמקצה הפרו למקצה הארצי"
+                  className="text-xs px-3 py-1.5 rounded-md bg-amber-500/20 text-amber-200 border border-amber-500/40 hover:bg-amber-500/30 disabled:opacity-30 not-italic">
+            ⬇ העבר לארצי
+          </button>
+        )}
       </div>
     </div>
   );
