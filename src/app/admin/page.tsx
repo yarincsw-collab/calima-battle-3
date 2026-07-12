@@ -119,6 +119,59 @@ export default function AdminPage() {
     }
   }
 
+  /**
+   * Build a vCard (.vcf) file with all athletes matching the current filters.
+   * Each contact is prefixed "Calima B3 - " so they sort together in the phone.
+   * Import on iPhone/Android → add all to a WhatsApp group.
+   */
+  function exportContacts() {
+    const rows = filtered.filter(
+      (r) => r.paymentStatus === "approved" || r.paymentStatus === "charged",
+    );
+    if (rows.length === 0) {
+      alert("אין אתלטים מאושרים בתצוגה הזו");
+      return;
+    }
+
+    const vcards = rows.map((r) => {
+      const parts = (r.fullName || "").trim().split(/\s+/);
+      const first = parts[0] || "";
+      const last = parts.slice(1).join(" ") || "";
+      const displayName = `Calima B3 - ${r.fullName}`;
+      // Normalise phone to E.164 (Israel): 050... → +972 50...
+      const raw = (r.phone || "").replace(/\D/g, "");
+      const tel = raw.startsWith("0") ? "+972" + raw.slice(1) : raw ? "+" + raw : "";
+      const note = `Battles 3 • ${r.categories} • ${r.totalPrice} ₪`;
+      // vCard escaping: commas, semicolons, backslashes, newlines
+      const esc = (s: string) =>
+        s.replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\r?\n/g, "\\n");
+      return [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        `N:${esc(last)};${esc(first)};;;`,
+        `FN:${esc(displayName)}`,
+        tel ? `TEL;TYPE=CELL:${tel}` : "",
+        r.email ? `EMAIL:${esc(r.email)}` : "",
+        `NOTE:${esc(note)}`,
+        "CATEGORIES:Calima Battles 3",
+        "END:VCARD",
+      ]
+        .filter(Boolean)
+        .join("\r\n");
+    });
+
+    const vcf = vcards.join("\r\n") + "\r\n";
+    const blob = new Blob([vcf], { type: "text/vcard;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `calima-battles-3-contacts-${new Date().toISOString().slice(0, 10)}.vcf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   function submitKey() {
     localStorage.setItem(KEY_STORAGE, keyInput);
     setAdminKey(keyInput);
@@ -212,6 +265,9 @@ export default function AdminPage() {
           >
             📊 פתח Google Sheet
           </a>
+          <button onClick={exportContacts} className="btn-ghost text-xs not-italic">
+            📇 ייצא אנשי קשר
+          </button>
           <button onClick={refresh} className="btn-ghost text-xs not-italic" disabled={loading}>
             {loading ? "מרענן..." : "🔄 רענן"}
           </button>
