@@ -28,6 +28,9 @@ interface Reg {
 }
 
 const KEY_STORAGE = "calima-admin-key";
+const GROUP_LINK_STORAGE = "calima-admin-group-link";
+const INVITED_STORAGE = "calima-admin-invited"; // JSON array of registrationIds
+const COMPETITORS_LIST_PHONE = "972543399946"; // 054-339-9946 in E.164
 
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState<string>("");
@@ -38,12 +41,112 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [groupLink, setGroupLink] = useState<string>("");
+  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const [showGroupModal, setShowGroupModal] = useState<boolean>(false);
 
-  // Load key from storage on mount
+  // Load key + group state from storage on mount
   useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem(KEY_STORAGE) : null;
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem(KEY_STORAGE);
     if (saved) setAdminKey(saved);
+    const link = localStorage.getItem(GROUP_LINK_STORAGE);
+    if (link) setGroupLink(link);
+    try {
+      const inv = JSON.parse(localStorage.getItem(INVITED_STORAGE) || "[]") as string[];
+      setInvitedIds(new Set(inv));
+    } catch {}
   }, []);
+
+  function persistInvited(set: Set<string>) {
+    localStorage.setItem(INVITED_STORAGE, JSON.stringify([...set]));
+  }
+
+  function persistGroupLink(link: string) {
+    localStorage.setItem(GROUP_LINK_STORAGE, link);
+    setGroupLink(link);
+  }
+
+  /** Normalise Israeli phone to E.164 (+972…) for wa.me links. */
+  function toIntlPhone(raw: string): string {
+    const digits = (raw || "").replace(/\D/g, "");
+    return digits.startsWith("0") ? "972" + digits.slice(1) : digits;
+  }
+
+  /** Open a WhatsApp chat with an approved athlete containing the group invite link. */
+  function inviteToGroup(reg: Reg) {
+    if (!groupLink) {
+      alert("קודם הכנס קישור הזמנה לקבוצת WhatsApp");
+      return;
+    }
+    const msg =
+      `שלום ${reg.fullName}! 🥇\n\n` +
+      `זו הזמנה לקבוצת WhatsApp הרשמית של *Calima Battles 3*.\n` +
+      `בקבוצה נעדכן על כל הפרטים לקראת יום התחרות (30-31.7).\n\n` +
+      `לחץ להצטרפות:\n${groupLink}`;
+    const url = `https://wa.me/${toIntlPhone(reg.phone)}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+    // Mark as invited so the row disappears from the "pending" list
+    const next = new Set(invitedIds);
+    next.add(reg.registrationId);
+    setInvitedIds(next);
+    persistInvited(next);
+  }
+
+  function unmarkInvited(id: string) {
+    const next = new Set(invitedIds);
+    next.delete(id);
+    setInvitedIds(next);
+    persistInvited(next);
+  }
+
+  /**
+   * Send a formatted competitor list (grouped by category) to a fixed phone
+   * via WhatsApp deep link. Only includes approved / charged athletes.
+   */
+  function sendCompetitorList() {
+    const rows = (registrations ?? []).filter(
+      (r) => r.paymentStatus === "approved" || r.paymentStatus === "charged",
+    );
+    if (rows.length === 0) {
+      alert("אין מתחרים מאושרים לשלוח");
+      return;
+    }
+
+    // Group athletes by category label (Sheet stores multi-category joined with " | ").
+    const byCat = new Map<string, string[]>();
+    for (const r of rows) {
+      const cats = (r.categories || "").split("|").map((c) => c.trim()).filter(Boolean);
+      const target = cats.length ? cats : ["(ללא קטגוריה)"];
+      for (const c of target) {
+        if (!byCat.has(c)) byCat.set(c, []);
+        byCat.get(c)!.push(r.fullName);
+      }
+    }
+
+    // Iterate CATEGORIES in the canonical order (freestyle → endurance)
+    const orderedLabels = [
+      ...CATEGORIES.map((c) => c.label),
+      ...[...byCat.keys()].filter((k) => !CATEGORIES.some((c) => c.label === k)),
+    ];
+
+    const lines: string[] = [
+      "📋 *רשימת מתחרים מאושרים*",
+      "Calima Battles 3 • 30-31.7",
+      "",
+    ];
+    for (const cat of orderedLabels) {
+      const names = byCat.get(cat);
+      if (!names || names.length === 0) continue;
+      lines.push(`▪️ *${cat}* (${names.length})`);
+      names.forEach((n) => lines.push(`   • ${n}`));
+      lines.push("");
+    }
+    lines.push(`סה"כ: ${rows.length} מתחרים`);
+
+    const url = `https://wa.me/${COMPETITORS_LIST_PHONE}?text=${encodeURIComponent(lines.join("\n"))}`;
+    window.open(url, "_blank");
+  }
 
   // When key changes, fetch
   useEffect(() => {
@@ -268,6 +371,12 @@ export default function AdminPage() {
           <button onClick={exportContacts} className="btn-ghost text-xs not-italic">
             📇 ייצא אנשי קשר
           </button>
+          <button onClick={() => setShowGroupModal(true)} className="btn-ghost text-xs not-italic">
+            💬 צור קבוצה
+          </button>
+          <button onClick={sendCompetitorList} className="btn-ghost text-xs not-italic">
+            📋 רשימת מתחרים
+          </button>
           <button onClick={refresh} className="btn-ghost text-xs not-italic" disabled={loading}>
             {loading ? "מרענן..." : "🔄 רענן"}
           </button>
@@ -394,7 +503,178 @@ export default function AdminPage() {
           ))}
         </div>
       )}
+
+      {showGroupModal && (
+        <GroupInviteModal
+          groupLink={groupLink}
+          onSaveLink={persistGroupLink}
+          registrations={registrations ?? []}
+          invitedIds={invitedIds}
+          onInvite={inviteToGroup}
+          onUnmark={unmarkInvited}
+          onClose={() => setShowGroupModal(false)}
+        />
+      )}
     </main>
+  );
+}
+
+function GroupInviteModal({
+  groupLink,
+  onSaveLink,
+  registrations,
+  invitedIds,
+  onInvite,
+  onUnmark,
+  onClose,
+}: {
+  groupLink: string;
+  onSaveLink: (link: string) => void;
+  registrations: Reg[];
+  invitedIds: Set<string>;
+  onInvite: (reg: Reg) => void;
+  onUnmark: (id: string) => void;
+  onClose: () => void;
+}) {
+  const [linkInput, setLinkInput] = useState(groupLink);
+
+  const eligible = registrations.filter(
+    (r) => r.paymentStatus === "approved" || r.paymentStatus === "charged",
+  );
+  const pending = eligible.filter((r) => !invitedIds.has(r.registrationId));
+  const invited = eligible.filter((r) => invitedIds.has(r.registrationId));
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 not-italic"
+      onClick={onClose}
+    >
+      <div
+        className="card p-5 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border-electric-500/30 shadow-glow"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="grunge-text text-2xl text-white">💬 הזמנה לקבוצה</h2>
+          <button
+            onClick={onClose}
+            className="text-white/60 hover:text-white text-2xl leading-none"
+            aria-label="סגור"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mb-5">
+          <label className="text-white/60 text-xs uppercase tracking-widest">
+            קישור הזמנה לקבוצה
+          </label>
+          <div className="flex gap-2 mt-2">
+            <input
+              type="url"
+              dir="ltr"
+              value={linkInput}
+              onChange={(e) => setLinkInput(e.target.value)}
+              placeholder="https://chat.whatsapp.com/..."
+              className="input-field flex-1"
+            />
+            <button
+              onClick={() => onSaveLink(linkInput.trim())}
+              className="btn-primary text-xs px-4"
+              disabled={!linkInput.trim() || linkInput.trim() === groupLink}
+            >
+              שמור
+            </button>
+          </div>
+          <p className="text-white/40 text-xs mt-2">
+            צור קבוצה ב-WhatsApp → הגדרות קבוצה → הזמנה בקישור → העתק כאן.
+          </p>
+        </div>
+
+        <div className="border-t border-white/10 my-4" />
+
+        <div className="mb-2 text-sm text-white/70">
+          <span className="text-amber-300 font-bold">{pending.length}</span> ממתינים להזמנה
+          <span className="text-white/30 mx-2">•</span>
+          <span className="text-emerald-300 font-bold">{invited.length}</span> הוזמנו
+        </div>
+
+        {pending.length === 0 && invited.length === 0 ? (
+          <div className="text-white/40 text-center py-8">
+            אין אתלטים מאושרים עדיין.
+          </div>
+        ) : (
+          <>
+            {pending.length > 0 && (
+              <div className="mb-4">
+                <div className="text-amber-300 text-xs uppercase tracking-widest mb-2">
+                  ממתינים
+                </div>
+                <div className="space-y-2">
+                  {pending.map((r) => (
+                    <div
+                      key={r.registrationId}
+                      className="flex items-center justify-between gap-3 rounded-md border border-white/10 p-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-white text-sm font-bold truncate">
+                          {r.fullName}
+                        </div>
+                        <div className="text-white/50 text-xs truncate" dir="ltr">
+                          {r.phone}
+                        </div>
+                        <div className="text-electric-400 text-xs truncate">
+                          {r.categories}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onInvite(r)}
+                        disabled={!groupLink}
+                        className="text-xs px-3 py-1.5 rounded-md bg-green-500/20 text-green-300 border border-green-500/40 hover:bg-green-500/30 disabled:opacity-30 shrink-0"
+                        title={!groupLink ? "קודם שמור קישור" : ""}
+                      >
+                        📱 שלח הזמנה
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {invited.length > 0 && (
+              <div>
+                <div className="text-emerald-300 text-xs uppercase tracking-widest mb-2">
+                  הוזמנו
+                </div>
+                <div className="space-y-2">
+                  {invited.map((r) => (
+                    <div
+                      key={r.registrationId}
+                      className="flex items-center justify-between gap-3 rounded-md border border-emerald-500/20 bg-emerald-500/5 p-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-white/80 text-sm truncate">
+                          ✓ {r.fullName}
+                        </div>
+                        <div className="text-white/40 text-xs truncate">
+                          {r.categories}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onUnmark(r.registrationId)}
+                        className="text-xs px-3 py-1 rounded-md text-white/50 hover:text-white/80 shrink-0"
+                        title="הסר סימון (יופיע שוב ברשימת הממתינים)"
+                      >
+                        ↺ בטל
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
