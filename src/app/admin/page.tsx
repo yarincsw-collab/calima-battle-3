@@ -266,7 +266,7 @@ export default function AdminPage() {
       const parts = (r.fullName || "").trim().split(/\s+/);
       const first = parts[0] || "";
       const last = parts.slice(1).join(" ") || "";
-      const displayName = `Calima B3 - ${r.fullName}`;
+      const displayName = `${r.fullName} - Calima Battles 3`;
       // Normalise phone to E.164 (Israel): 050... → +972 50...
       const raw = (r.phone || "").replace(/\D/g, "");
       const tel = raw.startsWith("0") ? "+972" + raw.slice(1) : raw ? "+" + raw : "";
