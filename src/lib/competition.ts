@@ -10,7 +10,8 @@ export type CategoryId =
   | "freestyle_calima"
   | "freestyle_women"
   | "endurance_national"
-  | "endurance_calima"
+  | "endurance_calima_youth"
+  | "endurance_calima_adult"
   | "endurance_women";
 
 export interface Category {
@@ -86,11 +87,21 @@ export const CATEGORIES: Category[] = [
     price: 100,
   },
   {
-    id: "endurance_calima",
+    id: "endurance_calima_youth",
     day: "endurance",
-    label: "מתאמני קלימה — סיבולת",
-    shortLabel: "מתאמני קלימה",
-    description: "מקצה הסיבולת של מתאמני הבית.",
+    label: "מתאמנים נוער — סיבולת",
+    shortLabel: "מתאמנים נוער",
+    description: "מקצה הסיבולת של מתאמני הבית — נוער (עד גיל 18).",
+    slots: 8,
+    price: 0,
+    priceNote: "ללא עלות למתאמני קלימה",
+  },
+  {
+    id: "endurance_calima_adult",
+    day: "endurance",
+    label: "מתאמנים בוגרים — סיבולת",
+    shortLabel: "מתאמנים בוגרים",
+    description: "מקצה הסיבולת של מתאמני הבית — בוגרים (18+).",
     slots: 8,
     price: 0,
     priceNote: "ללא עלות למתאמני קלימה",
