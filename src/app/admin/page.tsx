@@ -232,6 +232,31 @@ export default function AdminPage() {
     }
   }
 
+  /** Move an athlete from "ארצי" to "פרו ארצי" (freestyle). */
+  async function moveNationalToPro(reg: Reg) {
+    if (!confirm(`להעביר את ${reg.fullName} מ"ארצי" ל"פרו ארצי" בפריסטייל?`)) return;
+    setBusy((b) => ({ ...b, [reg.registrationId]: true }));
+    try {
+      const res = await fetch("/api/admin/move-category", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({
+          registrationId: reg.registrationId,
+          from: "freestyle_national",
+          to: "freestyle_pro_national",
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(`שגיאה: ${err.error || res.status}`);
+        return;
+      }
+      await refresh();
+    } finally {
+      setBusy((b) => ({ ...b, [reg.registrationId]: false }));
+    }
+  }
+
   /** Mark a registration as paid after the athlete has paid via iCredit. */
   async function markPaid(reg: Reg) {
     if (!confirm(`לסמן את ${reg.fullName} כמשולם?`)) return;
@@ -526,6 +551,7 @@ export default function AdminPage() {
               onSendWhatsApp={() => sendWhatsApp(r)}
               onMarkPaid={() => markPaid(r)}
               onMoveProToNational={() => moveProToNational(r)}
+              onMoveNationalToPro={() => moveNationalToPro(r)}
             />
           ))}
         </div>
@@ -732,6 +758,7 @@ function RegRow({
   onSendWhatsApp,
   onMarkPaid,
   onMoveProToNational,
+  onMoveNationalToPro,
 }: {
   reg: Reg;
   busy: boolean;
@@ -740,8 +767,10 @@ function RegRow({
   onSendWhatsApp: () => void;
   onMarkPaid: () => void;
   onMoveProToNational: () => void;
+  onMoveNationalToPro: () => void;
 }) {
   const isPro = (reg.categoryIds || []).includes("freestyle_pro_national");
+  const isNational = (reg.categoryIds || []).includes("freestyle_national");
   const status = statusLabel(reg.paymentStatus);
   const isAccepted = reg.paymentStatus === "approved" || reg.paymentStatus === "charged";
   return (
@@ -812,6 +841,14 @@ function RegRow({
                   title="העבר מהמקצה הפרו למקצה הארצי"
                   className="text-xs px-3 py-1.5 rounded-md bg-amber-500/20 text-amber-200 border border-amber-500/40 hover:bg-amber-500/30 disabled:opacity-30 not-italic">
             ⬇ העבר לארצי
+          </button>
+        )}
+        {isNational && (
+          <button onClick={onMoveNationalToPro}
+                  disabled={busy}
+                  title="העבר מהמקצה הארצי למקצה הפרו ארצי"
+                  className="text-xs px-3 py-1.5 rounded-md bg-purple-500/20 text-purple-200 border border-purple-500/40 hover:bg-purple-500/30 disabled:opacity-30 not-italic">
+            ⬆ העבר לפרו ארצי
           </button>
         )}
       </div>
